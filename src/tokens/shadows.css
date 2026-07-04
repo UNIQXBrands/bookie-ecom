@@ -1,0 +1,13 @@
+:root {
+  --shadow-none:  none;
+  --shadow-sm:    2px 2px 0 var(--shadow-color);
+  --shadow-md:    3px 3px 0 var(--shadow-color);
+  --shadow-lg:    5px 5px 0 var(--shadow-color);
+  --shadow-xl:    6px 6px 0 var(--shadow-color);
+  --shadow-focus: 0 0 0 3px rgba(2, 3, 9, 0.15);
+
+  --border:        2px solid var(--ink-900);
+  --border-light:  1.5px solid var(--ink-900);
+  --border-muted:  1.5px solid var(--ink-100);
+  --border-dashed: 2px dashed var(--ink-900);
+}

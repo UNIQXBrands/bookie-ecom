@@ -1,0 +1,41 @@
+:root {
+  --ink-900: #020309;
+  --ink-600: #444444;
+  --ink-400: #888888;
+  --ink-200: #cccccc;
+  --ink-100: #e8e0d0;
+
+  --paper: #FAF3E3;
+  --paper-dark: #393222;
+  --surface: #FFFFFF;
+
+  --accent-yellow: #FDEEC4;
+  --accent-green:  #D2ECD0;
+  --accent-red:    #F3C1C0;
+  --accent-blue:   #E5F5F9;
+
+  --status-paid:    var(--accent-green);
+  --status-pending: var(--accent-yellow);
+  --status-review:  var(--accent-red);
+  --status-info:    var(--accent-blue);
+
+  --btw-21:      var(--accent-blue);
+  --btw-9:       var(--accent-green);
+  --btw-0:       var(--paper);
+  --btw-unknown: var(--accent-red);
+
+  --text-primary:   var(--ink-900);
+  --text-secondary: var(--ink-600);
+  --text-muted:     var(--ink-400);
+  --border-color:   var(--ink-900);
+  --shadow-color:   var(--ink-900);
+  --divider:        var(--ink-100);
+
+  --sidebar-bg:          var(--paper-dark);
+  --sidebar-bg-hover:    #443D2D;
+  --sidebar-bg-active:   #4C4533;
+  --sidebar-text:        #A89F88;
+  --sidebar-text-active: var(--paper);
+  --sidebar-accent:      var(--accent-yellow);
+  --sidebar-divider:     #564E3C;
+}

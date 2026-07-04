@@ -1,0 +1,31 @@
+:root {
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, monospace;
+
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+
+  --fs-display:    32px;
+  --fs-heading-lg: 22px;
+  --fs-heading-md: 18px;
+  --fs-heading-sm: 15px;
+  --fs-body-lg:    14px;
+  --fs-body-md:    13px;
+  --fs-body-sm:    12px;
+  --fs-label:      11px;
+  --fs-overline:   10px;
+  --fs-mono-lg:    22px;
+  --fs-mono-md:    13px;
+  --fs-mono-sm:    11px;
+
+  --lh-display: 1.15;
+  --lh-heading: 1.2;
+  --lh-body:    1.55;
+
+  --ls-display:  -0.5px;
+  --ls-heading:  -0.3px;
+  --ls-overline: 1px;
+  --ls-label:    0.5px;
+}

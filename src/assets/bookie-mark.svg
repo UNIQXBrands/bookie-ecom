@@ -1,0 +1,5 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bookie">
+  <rect x="6" y="9" width="28" height="28" rx="8" fill="#020309"></rect>
+  <rect x="3" y="6" width="28" height="28" rx="8" fill="#FDEEC4" stroke="#020309" stroke-width="2"></rect>
+  <text x="17" y="26" font-family="&#39;DM Sans&#39;, sans-serif" font-weight="700" font-size="18" fill="#020309" text-anchor="middle">B</text>
+</svg>
