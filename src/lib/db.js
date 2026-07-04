@@ -105,6 +105,29 @@ export async function getFileUrl(filePath) {
   return data.signedUrl;
 }
 
+// ─── settings ────────────────────────────────────────────────────────────────
+
+export async function fetchSettings() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await supabase
+    .from('user_settings')
+    .select('anthropic_api_key')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? { apiKey: data.anthropic_api_key || '' } : null;
+}
+
+export async function upsertSettings({ apiKey }) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const { error } = await supabase
+    .from('user_settings')
+    .upsert({ user_id: user.id, anthropic_api_key: apiKey }, { onConflict: 'user_id' });
+  if (error) throw error;
+}
+
 // ─── sales invoices ──────────────────────────────────────────────────────────
 
 function toSalesRow(inv) {

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import {
   fetchInvoices, upsertInvoice, patchInvoice, deleteInvoice, uploadFile,
   fetchSalesInvoices, upsertSalesInvoice, deleteSalesInvoice,
+  fetchSettings, upsertSettings,
 } from '../lib/db';
 
 const AppContext = createContext(null);
@@ -145,9 +146,18 @@ export function AppProvider({ children }) {
     async function init() {
       try {
         await migrateFromLocalStorage();
-        const [rawInvs, sales] = await Promise.all([fetchInvoices(), fetchSalesInvoices().catch(() => [])]);
+        const [rawInvs, sales, settings] = await Promise.all([
+          fetchInvoices(), fetchSalesInvoices().catch(() => []), fetchSettings().catch(() => null),
+        ]);
         setUserInvoices(rawInvs);
         setSalesInvoices(sales);
+        if (settings) {
+          setApiKeyState(settings.apiKey);
+          localStorage.setItem('bookie_api_key', settings.apiKey);
+        } else {
+          const localKey = localStorage.getItem('bookie_api_key') || '';
+          if (localKey) await upsertSettings({ apiKey: localKey }).catch(() => {});
+        }
       } catch (err) {
         console.error('Supabase load failed:', err);
       } finally {
@@ -160,6 +170,7 @@ export function AppProvider({ children }) {
   const setApiKey = useCallback((key) => {
     setApiKeyState(key);
     localStorage.setItem('bookie_api_key', key);
+    upsertSettings({ apiKey: key }).catch((err) => console.error('Failed to save API key:', err));
   }, []);
 
   const addInvoice = useCallback(async (invoice, fileDataUrl) => {
