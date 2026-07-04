@@ -11,7 +11,7 @@ import { Instellingen }  from './screens/Instellingen';
 import { Balans }        from './screens/Balans';
 import { Leveranciers }  from './screens/Leveranciers';
 import { Verkoop }       from './screens/Verkoop';
-import { Landing }       from './screens/Landing';
+import { Landing, ResetPasswordScreen } from './screens/Landing';
 import { data, nav }     from './data/data';
 import { supabase }      from './lib/supabase';
 import { AppProvider }   from './context/AppContext';
@@ -87,14 +87,16 @@ function LoadingScreen() {
 export function App() {
   const [session,   setSession]   = useState(null);
   const [authReady, setAuthReady] = useState(false);
+  const [recovery,  setRecovery]  = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setAuthReady(true);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
+      if (event === 'PASSWORD_RECOVERY') setRecovery(true);
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -104,6 +106,7 @@ export function App() {
   }
 
   if (!authReady) return <LoadingScreen />;
+  if (recovery)   return <ResetPasswordScreen onDone={() => setRecovery(false)} />;
   if (!session)   return <Landing />;
 
   return <AppProvider><AppShell onSignOut={handleSignOut} /></AppProvider>;

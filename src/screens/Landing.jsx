@@ -114,8 +114,9 @@ function AuthModal({ onClose, initialTab = 'login' }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [signupDone, setSignupDone] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
-  const switchTab = (t) => { setTab(t); setError(''); setSignupDone(false); };
+  const switchTab = (t) => { setTab(t); setError(''); setSignupDone(false); setResetSent(false); };
 
   async function handleLogin(e) {
     e.preventDefault(); setError(''); setLoading(true);
@@ -124,6 +125,19 @@ function AuthModal({ onClose, initialTab = 'login' }) {
       if (error) throw error;
       onClose();
     } catch (err) { setError(err.message || 'Inloggen mislukt'); }
+    finally { setLoading(false); }
+  }
+
+  async function handleForgotPassword() {
+    if (!email) { setError('Vul eerst je e-mailadres in'); return; }
+    setError(''); setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      });
+      if (error) throw error;
+      setResetSent(true);
+    } catch (err) { setError(err.message || 'Versturen mislukt'); }
     finally { setLoading(false); }
   }
 
@@ -167,10 +181,26 @@ function AuthModal({ onClose, initialTab = 'login' }) {
                 We stuurden een bevestigingslink naar <strong>{email}</strong>.
               </div>
             </div>
+          ) : resetSent ? (
+            <div style={{ textAlign: 'center', padding: '8px 0' }}>
+              <div style={{ width: '56px', height: '56px', background: C.blue, border: C.border, borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', boxShadow: shadow(3) }}>
+                <Mail size={26} />
+              </div>
+              <div style={{ fontFamily: sans, fontWeight: 800, fontSize: '18px', marginBottom: '10px' }}>Controleer je e-mail</div>
+              <div style={{ fontFamily: sans, fontSize: '13px', color: '#555', lineHeight: 1.7 }}>
+                We stuurden een link om je wachtwoord opnieuw in te stellen naar <strong>{email}</strong>.
+              </div>
+            </div>
           ) : tab === 'login' ? (
             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div><label style={lbl}>E-mailadres</label><input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jou@bedrijf.nl" style={inp} /></div>
-              <div><label style={lbl}>Wachtwoord</label><input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" style={inp} /></div>
+              <div>
+                <label style={lbl}>Wachtwoord</label>
+                <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" style={inp} />
+              </div>
+              <button type="button" onClick={handleForgotPassword} style={{ alignSelf: 'flex-end', marginTop: '-8px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, color: C.muted, textDecoration: 'underline', fontSize: '12px', fontFamily: sans }}>
+                Wachtwoord vergeten?
+              </button>
               {error && <div style={{ background: '#F3C1C0', border: '1.5px solid #020309', borderRadius: '8px', padding: '9px 12px', fontFamily: sans, fontSize: '13px' }}>{error}</div>}
               <button type="submit" disabled={loading} style={{ padding: '12px', background: C.dark, color: C.cream, border: C.border, borderRadius: '11px', boxShadow: `3px 3px 0 ${C.yellow}`, fontFamily: sans, fontWeight: 700, fontSize: '14px', cursor: loading ? 'not-allowed' : 'pointer' }}>
                 {loading ? 'Bezig…' : 'Inloggen →'}
@@ -188,6 +218,64 @@ function AuthModal({ onClose, initialTab = 'login' }) {
               {error && <div style={{ background: '#F3C1C0', border: '1.5px solid #020309', borderRadius: '8px', padding: '9px 12px', fontFamily: sans, fontSize: '13px' }}>{error}</div>}
               <button type="submit" disabled={loading} style={{ padding: '12px', background: C.dark, color: C.cream, border: C.border, borderRadius: '11px', boxShadow: `3px 3px 0 ${C.yellow}`, fontFamily: sans, fontWeight: 700, fontSize: '14px', cursor: loading ? 'not-allowed' : 'pointer' }}>
                 {loading ? 'Bezig…' : 'Account aanmaken →'}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── reset password screen ────────────────────────────────────────────────────
+
+export function ResetPasswordScreen({ onDone }) {
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [done, setDone] = useState(false);
+
+  const inp = { width: '100%', boxSizing: 'border-box', padding: '10px 13px', fontSize: '14px', fontFamily: sans, background: '#FFFFFF', border: C.border, borderRadius: '10px', outline: 'none', color: C.dark };
+  const lbl = { display: 'block', fontFamily: sans, fontWeight: 700, fontSize: '11px', letterSpacing: '0.5px', textTransform: 'uppercase', color: '#555', marginBottom: '5px' };
+
+  async function handleSubmit(e) {
+    e.preventDefault(); setError('');
+    if (password !== confirm) { setError('Wachtwoorden komen niet overeen'); return; }
+    if (password.length < 6) { setError('Minimaal 6 tekens vereist'); return; }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      setDone(true);
+    } catch (err) { setError(err.message || 'Wachtwoord instellen mislukt'); }
+    finally { setLoading(false); }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: C.cream, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ background: C.cream, border: C.border, borderRadius: '20px', boxShadow: shadow(8, C.yellow), width: '100%', maxWidth: '400px' }}>
+        <div style={{ padding: '18px 22px', borderBottom: C.border }}>
+          <div style={{ fontFamily: sans, fontWeight: 800, fontSize: '16px' }}>Nieuw wachtwoord instellen</div>
+        </div>
+        <div style={{ padding: '26px 22px' }}>
+          {done ? (
+            <div style={{ textAlign: 'center', padding: '8px 0' }}>
+              <div style={{ width: '56px', height: '56px', background: C.green, border: C.border, borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', boxShadow: shadow(3) }}>
+                <Check size={26} />
+              </div>
+              <div style={{ fontFamily: sans, fontWeight: 800, fontSize: '18px', marginBottom: '14px' }}>Wachtwoord ingesteld</div>
+              <button onClick={onDone} style={{ padding: '12px 20px', background: C.dark, color: C.cream, border: C.border, borderRadius: '11px', boxShadow: `3px 3px 0 ${C.yellow}`, fontFamily: sans, fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}>
+                Naar Bookie →
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div><label style={lbl}>Nieuw wachtwoord</label><input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Minimaal 6 tekens" style={inp} /></div>
+              <div><label style={lbl}>Bevestig wachtwoord</label><input type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="••••••••" style={inp} /></div>
+              {error && <div style={{ background: '#F3C1C0', border: '1.5px solid #020309', borderRadius: '8px', padding: '9px 12px', fontFamily: sans, fontSize: '13px' }}>{error}</div>}
+              <button type="submit" disabled={loading} style={{ padding: '12px', background: C.dark, color: C.cream, border: C.border, borderRadius: '11px', boxShadow: `3px 3px 0 ${C.yellow}`, fontFamily: sans, fontWeight: 700, fontSize: '14px', cursor: loading ? 'not-allowed' : 'pointer' }}>
+                {loading ? 'Bezig…' : 'Wachtwoord opslaan'}
               </button>
             </form>
           )}
