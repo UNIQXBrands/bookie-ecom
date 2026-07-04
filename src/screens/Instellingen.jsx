@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input }   from '../components/Input';
 import { Button }  from '../components/Button';
 import { Badge }   from '../components/Badge';
@@ -150,7 +150,7 @@ function LangButton({ label, active, onClick }) {
 // ─── main screen ─────────────────────────────────────────────────────────────
 
 export function Instellingen() {
-  const { apiKey, setApiKey } = useApp();
+  const { apiKey, setApiKey, companyProfile, setCompanyProfile } = useApp();
   const [lang, setLang]           = useState('nl');
   const [connections, setConnections] = useState(() => {
     const map = {};
@@ -164,24 +164,13 @@ export function Instellingen() {
     maandrapport: false,
   });
 
-  const [profile, setProfile] = useState(() => {
-    try {
-      const s = JSON.parse(localStorage.getItem('bookie_company_info') || '{}');
-      return {
-        bedrijfsnaam: s.bedrijfsnaam || '',
-        email:        s.email        || '',
-        kvk:          s.kvk          || '',
-        btwnummer:    s.btwnummer    || '',
-        address:      s.address      || '',
-        iban:         s.iban         || '',
-        paymentDays:  s.paymentDays  || '14',
-      };
-    } catch { return { bedrijfsnaam: '', email: '', kvk: '', btwnummer: '', address: '', iban: '', paymentDays: '14' }; }
-  });
+  const [profile, setProfile] = useState(companyProfile);
   const [profileSaved, setProfileSaved] = useState(false);
 
+  useEffect(() => { setProfile(companyProfile); }, [companyProfile]);
+
   function saveProfile() {
-    localStorage.setItem('bookie_company_info', JSON.stringify(profile));
+    setCompanyProfile(profile);
     setProfileSaved(true);
     setTimeout(() => setProfileSaved(false), 2000);
   }
@@ -197,6 +186,8 @@ export function Instellingen() {
   const [keyInput,  setKeyInput]  = useState(apiKey || '');
   const [showKey,   setShowKey]   = useState(false);
   const [keySaved,  setKeySaved]  = useState(false);
+
+  useEffect(() => { setKeyInput(apiKey || ''); }, [apiKey]);
 
   function handleSaveKey() {
     setApiKey(keyInput.trim());

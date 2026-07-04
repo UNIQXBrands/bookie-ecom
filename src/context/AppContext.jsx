@@ -113,8 +113,18 @@ async function migrateFromLocalStorage() {
 
 // ─── provider ────────────────────────────────────────────────────────────────
 
+const DEFAULT_COMPANY_PROFILE = { bedrijfsnaam: '', email: '', kvk: '', btwnummer: '', address: '', iban: '', paymentDays: '14' };
+
+function readLocalCompanyProfile() {
+  try {
+    const s = JSON.parse(localStorage.getItem('bookie_company_info') || '{}');
+    return { ...DEFAULT_COMPANY_PROFILE, ...s };
+  } catch { return { ...DEFAULT_COMPANY_PROFILE }; }
+}
+
 export function AppProvider({ children }) {
   const [apiKey, setApiKeyState] = useState(() => localStorage.getItem('bookie_api_key') || '');
+  const [companyProfile, setCompanyProfileState] = useState(readLocalCompanyProfile);
 
   const [closedQuarters, setClosedQuarters] = useState(() => {
     try {
@@ -154,9 +164,14 @@ export function AppProvider({ children }) {
         if (settings) {
           setApiKeyState(settings.apiKey);
           localStorage.setItem('bookie_api_key', settings.apiKey);
+          setCompanyProfileState(settings.companyProfile);
+          localStorage.setItem('bookie_company_info', JSON.stringify(settings.companyProfile));
         } else {
           const localKey = localStorage.getItem('bookie_api_key') || '';
-          if (localKey) await upsertSettings({ apiKey: localKey }).catch(() => {});
+          const localProfile = readLocalCompanyProfile();
+          if (localKey || Object.values(localProfile).some(Boolean)) {
+            await upsertSettings({ apiKey: localKey, companyProfile: localProfile }).catch(() => {});
+          }
         }
       } catch (err) {
         console.error('Supabase load failed:', err);
@@ -171,6 +186,12 @@ export function AppProvider({ children }) {
     setApiKeyState(key);
     localStorage.setItem('bookie_api_key', key);
     upsertSettings({ apiKey: key }).catch((err) => console.error('Failed to save API key:', err));
+  }, []);
+
+  const setCompanyProfile = useCallback((profile) => {
+    setCompanyProfileState(profile);
+    localStorage.setItem('bookie_company_info', JSON.stringify(profile));
+    upsertSettings({ companyProfile: profile }).catch((err) => console.error('Failed to save company profile:', err));
   }, []);
 
   const addInvoice = useCallback(async (invoice, fileDataUrl) => {
@@ -211,6 +232,7 @@ export function AppProvider({ children }) {
   return (
     <AppContext.Provider value={{
       apiKey, setApiKey,
+      companyProfile, setCompanyProfile,
       userInvoices, addInvoice, updateInvoice, removeInvoice,
       salesInvoices, saveSalesInvoice, removeSalesInvoice,
       userQuarters, loading, closeQuarter, reopenQuarter,

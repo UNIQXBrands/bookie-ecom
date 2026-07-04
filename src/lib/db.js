@@ -107,24 +107,51 @@ export async function getFileUrl(filePath) {
 
 // ─── settings ────────────────────────────────────────────────────────────────
 
+function toSettingsRow({ apiKey, companyProfile }) {
+  const row = {};
+  if (apiKey !== undefined) row.anthropic_api_key = apiKey;
+  if (companyProfile) {
+    const p = companyProfile;
+    if (p.bedrijfsnaam !== undefined) row.bedrijfsnaam  = p.bedrijfsnaam;
+    if (p.email        !== undefined) row.email         = p.email;
+    if (p.kvk           !== undefined) row.kvk           = p.kvk;
+    if (p.btwnummer     !== undefined) row.btwnummer     = p.btwnummer;
+    if (p.address       !== undefined) row.address       = p.address;
+    if (p.iban          !== undefined) row.iban          = p.iban;
+    if (p.paymentDays   !== undefined) row.payment_days  = p.paymentDays;
+  }
+  return row;
+}
+
 export async function fetchSettings() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   const { data, error } = await supabase
     .from('user_settings')
-    .select('anthropic_api_key')
+    .select('anthropic_api_key, bedrijfsnaam, email, kvk, btwnummer, address, iban, payment_days')
     .eq('user_id', user.id)
     .maybeSingle();
   if (error) throw error;
-  return data ? { apiKey: data.anthropic_api_key || '' } : null;
+  if (!data) return null;
+  return {
+    apiKey: data.anthropic_api_key || '',
+    companyProfile: {
+      bedrijfsnaam: data.bedrijfsnaam || '',
+      email:        data.email        || '',
+      kvk:          data.kvk          || '',
+      btwnummer:    data.btwnummer    || '',
+      address:      data.address      || '',
+      iban:         data.iban         || '',
+      paymentDays:  data.payment_days || '14',
+    },
+  };
 }
 
-export async function upsertSettings({ apiKey }) {
+export async function upsertSettings(patch) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-  const { error } = await supabase
-    .from('user_settings')
-    .upsert({ user_id: user.id, anthropic_api_key: apiKey }, { onConflict: 'user_id' });
+  const row = { user_id: user.id, ...toSettingsRow(patch) };
+  const { error } = await supabase.from('user_settings').upsert(row, { onConflict: 'user_id' });
   if (error) throw error;
 }
 
