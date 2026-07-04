@@ -82,18 +82,14 @@ function Bubble({ msg }) {
   );
 }
 
-const SUGGESTIONS = [
-  'Waarom klopt mijn balans niet?',
-  'Is mijn liquiditeit gezond?',
-  'Hoe verhoog ik mijn eigen vermogen?',
-  'Wat zijn mijn grootste financiële risico\'s?',
-  'Wat kan ik doen om meer winst te maken?',
-];
-
 // ─── main component ──────────────────────────────────────────────────────────
 
 export function BalansChat({ balansData }) {
-  const { apiKey } = useApp();
+  const { apiKey, language, t } = useApp();
+  const SUGGESTIONS = [
+    t('chat.suggestion1'), t('chat.suggestion2'), t('chat.suggestion3'),
+    t('chat.suggestion4'), t('chat.suggestion5'),
+  ];
   const [messages, setMessages] = useState([]);
   const [input, setInput]       = useState('');
   const [loading, setLoading]   = useState(false);
@@ -118,7 +114,7 @@ export function BalansChat({ balansData }) {
 
     await streamChat({
       apiKey,
-      systemPrompt: buildBalansSystemPrompt(balansData),
+      systemPrompt: buildBalansSystemPrompt(balansData, language),
       messages: history,
       onDelta: (delta) => {
         setMessages((prev) => {
@@ -141,7 +137,7 @@ export function BalansChat({ balansData }) {
         setLoading(false);
       },
     });
-  }, [input, loading, messages, apiKey, balansData]);
+  }, [input, loading, messages, apiKey, balansData, language]);
 
   const handleKey = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
@@ -172,7 +168,7 @@ export function BalansChat({ balansData }) {
             Bookie AI
           </div>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#666' }}>
-            {balansData.period} · balansanalyse
+            {balansData.period} · {t('chat.balanceAnalysis')}
           </div>
         </div>
       </div>
@@ -184,8 +180,8 @@ export function BalansChat({ balansData }) {
           background: '#FDEEC4', border: '2px solid #020309', borderRadius: '10px',
           fontFamily: "'DM Sans', sans-serif", fontSize: '13px', lineHeight: 1.5,
         }}>
-          <strong>Geen API-sleutel ingesteld.</strong><br />
-          Ga naar <strong>Instellingen → Bookie AI</strong> om je Anthropic key toe te voegen.
+          <strong>{t('chat.noApiKeyTitle')}</strong><br />
+          {t('chat.noApiKeyDescBefore')} <strong>{t('chat.noApiKeySettingsPath')}</strong> {t('chat.noApiKeyDescAfter')}
         </div>
       )}
 
@@ -203,13 +199,13 @@ export function BalansChat({ balansData }) {
             }}>
               <Sparkles size={14} color="#888" style={{ marginTop: '2px', flexShrink: 0 }} />
               <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#555', lineHeight: 1.5 }}>
-                Ik heb je balans geladen. Stel me een vraag of kies een suggestie.
+                {t('chat.loadedBalance')}
               </span>
             </div>
 
             <div style={{ marginTop: '4px' }}>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '0.8px', textTransform: 'uppercase', color: '#888', marginBottom: '7px' }}>
-                Suggesties
+                {t('chat.suggestions')}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 {SUGGESTIONS.map((s) => (
@@ -247,7 +243,7 @@ export function BalansChat({ balansData }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKey}
-            placeholder="Stel een vraag…"
+            placeholder={t('chat.placeholder')}
             rows={1}
             disabled={loading}
             style={{

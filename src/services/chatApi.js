@@ -53,8 +53,12 @@ export async function streamChat({ apiKey, systemPrompt, messages, onDelta, onDo
   }
 }
 
-export function buildBalansSystemPrompt(d) {
-  return `Je bent een Nederlandse financiële adviseur gespecialiseerd in boekhouding voor e-commerce ondernemers (webshops, dropshipping).
+export function buildBalansSystemPrompt(d, lang = 'nl') {
+  const responseLanguageInstruction = lang === 'en'
+    ? '- Always respond in English'
+    : '- Antwoord altijd in het Nederlands';
+
+  return `Je bent een financiële adviseur gespecialiseerd in boekhouding voor e-commerce ondernemers (webshops, dropshipping).
 
 De gebruiker heeft de volgende balans voor ${d.period}:
 
@@ -82,7 +86,7 @@ ${d.inBalans
 }
 
 Instructies:
-- Antwoord altijd in het Nederlands
+${responseLanguageInstruction}
 - Gebruik concrete bedragen uit de balans in je antwoorden
 - Wees bondig en praktisch — max 200 woorden tenzij gevraagd
 - Gebruik bullet points voor lijstjes

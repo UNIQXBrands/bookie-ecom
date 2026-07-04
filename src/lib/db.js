@@ -107,9 +107,10 @@ export async function getFileUrl(filePath) {
 
 // ─── settings ────────────────────────────────────────────────────────────────
 
-function toSettingsRow({ apiKey, companyProfile }) {
+function toSettingsRow({ apiKey, companyProfile, language }) {
   const row = {};
   if (apiKey !== undefined) row.anthropic_api_key = apiKey;
+  if (language !== undefined) row.language = language;
   if (companyProfile) {
     const p = companyProfile;
     if (p.bedrijfsnaam !== undefined) row.bedrijfsnaam  = p.bedrijfsnaam;
@@ -128,13 +129,14 @@ export async function fetchSettings() {
   if (!user) return null;
   const { data, error } = await supabase
     .from('user_settings')
-    .select('anthropic_api_key, bedrijfsnaam, email, kvk, btwnummer, address, iban, payment_days')
+    .select('anthropic_api_key, language, bedrijfsnaam, email, kvk, btwnummer, address, iban, payment_days')
     .eq('user_id', user.id)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
   return {
     apiKey: data.anthropic_api_key || '',
+    language: data.language || 'nl',
     companyProfile: {
       bedrijfsnaam: data.bedrijfsnaam || '',
       email:        data.email        || '',

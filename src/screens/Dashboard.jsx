@@ -14,19 +14,21 @@ function SectionHeader({ children, right }) {
   );
 }
 
-const statusBadge = (s) => ({
-  paid:    <Badge variant="paid"    dot>Betaald</Badge>,
-  pending: <Badge variant="pending" dot>Openstaand</Badge>,
-  review:  <Badge variant="review"  dot>Te controleren</Badge>,
+const statusBadge = (s, t) => ({
+  paid:    <Badge variant="paid"    dot>{t('common.status.paid')}</Badge>,
+  pending: <Badge variant="pending" dot>{t('common.status.pending')}</Badge>,
+  review:  <Badge variant="review"  dot>{t('common.status.review')}</Badge>,
 }[s]);
 
-const columns = [
-  { key: 'supplier', label: 'Leverancier' },
-  { key: 'date',     label: 'Datum',  mono: true },
-  { key: 'btw',      label: 'BTW' },
-  { key: 'amount',   label: 'Bedrag', mono: true, align: 'right' },
-  { key: 'status',   label: 'Status' },
-];
+function getColumns(t) {
+  return [
+    { key: 'supplier', label: t('dashboard.colSupplier') },
+    { key: 'date',     label: t('dashboard.colDate'),  mono: true },
+    { key: 'btw',      label: t('dashboard.colVat') },
+    { key: 'amount',   label: t('dashboard.colAmount'), mono: true, align: 'right' },
+    { key: 'status',   label: t('dashboard.colStatus') },
+  ];
+}
 
 function parseDate(dateStr) {
   const parts = (dateStr || '').split('-');
@@ -41,20 +43,21 @@ function inQuarter(dateStr, q, year) {
   return d.year === year && Math.ceil(d.month / 3) === q;
 }
 
-function computeBtwSummary(purchaseInvs, salesInvs) {
+function computeBtwSummary(purchaseInvs, salesInvs, t) {
   const btwInkoop  = purchaseInvs.reduce((s, i) => s + (i.btwAmount || 0), 0);
   const btwVerkoop = salesInvs.reduce((s, i)    => s + (i.btwAmount || 0), 0);
   const net        = btwVerkoop - btwInkoop;
 
   const items = [];
-  if (btwVerkoop > 0) items.push({ label: 'BTW op verkoop',   value: fmtEur(btwVerkoop), positive: true });
-  if (btwInkoop  > 0) items.push({ label: 'Voorbelasting (inkoop)', value: fmtEur(btwInkoop), positive: false });
+  if (btwVerkoop > 0) items.push({ label: t('dashboard.vatOnSales'),   value: fmtEur(btwVerkoop), positive: true });
+  if (btwInkoop  > 0) items.push({ label: t('dashboard.vatOnPurchases'), value: fmtEur(btwInkoop), positive: false });
 
   return { btwInkoop, btwVerkoop, net, items };
 }
 
 export function Dashboard({ onUpload, onOpenAll }) {
-  const { userInvoices, salesInvoices } = useApp();
+  const { userInvoices, salesInvoices, t } = useApp();
+  const columns = getColumns(t);
 
   const now       = new Date();
   const currentQ  = Math.ceil((now.getMonth() + 1) / 3);
@@ -68,20 +71,20 @@ export function Dashboard({ onUpload, onOpenAll }) {
   const qPurchase = userInvoices.filter(i  => inQuarter(i.date, currentQ, currentY));
   const qSales    = salesInvoices.filter(i => inQuarter(i.date, currentQ, currentY));
 
-  const { btwInkoop, btwVerkoop, net } = computeBtwSummary(qPurchase, qSales);
+  const { btwInkoop, btwVerkoop, net } = computeBtwSummary(qPurchase, qSales, t);
 
   const totalExcl  = qPurchase.reduce((s, i) => s + (i.amountExcl || 0), 0);
   const paid       = qPurchase.filter(i => i.status === 'paid');
   const review     = qPurchase.filter(i => i.status === 'review');
   const paidExcl   = paid.reduce((s, i)   => s + (i.amountExcl || 0), 0);
   const reviewExcl = review.reduce((s, i) => s + (i.amountExcl || 0), 0);
-  const btwLabel   = net >= 0 ? 'BTW te betalen' : 'BTW terug';
+  const btwLabel   = net >= 0 ? t('dashboard.stat.vatToPay') : t('dashboard.stat.vatBack');
 
   const stats = [
-    { label: 'Totaal excl. BTW', value: fmtEur(totalExcl),       sub: `${qPurchase.length} facturen · ${qLabel}`, variant: 'yellow', icon: 'Wallet' },
-    { label: btwLabel,           value: fmtEur(Math.abs(net)),    sub: qPeriod,                                    variant: 'blue',   icon: 'Percent' },
-    { label: 'Betaald',          value: fmtEur(paidExcl),         sub: `${paid.length} facturen · ${qLabel}`,      variant: 'green',  icon: 'Check' },
-    { label: 'Te controleren',   value: fmtEur(reviewExcl),       sub: `${review.length} facturen · ${qLabel}`,    variant: 'red',    icon: 'AlertTriangle' },
+    { label: t('dashboard.stat.totalExclVat'), value: fmtEur(totalExcl),    sub: t('common.invoiceCount', { n: qPurchase.length }) + ` · ${qLabel}`, variant: 'yellow', icon: 'Wallet' },
+    { label: btwLabel,                         value: fmtEur(Math.abs(net)), sub: qPeriod,                                    variant: 'blue',   icon: 'Percent' },
+    { label: t('dashboard.stat.paid'),          value: fmtEur(paidExcl),     sub: t('common.invoiceCount', { n: paid.length }) + ` · ${qLabel}`,   variant: 'green',  icon: 'Check' },
+    { label: t('dashboard.stat.toReview'),      value: fmtEur(reviewExcl),   sub: t('common.invoiceCount', { n: review.length }) + ` · ${qLabel}`, variant: 'red',    icon: 'AlertTriangle' },
   ];
 
   // BTW breakdown voor BtwSummary component
@@ -103,7 +106,7 @@ export function Dashboard({ onUpload, onOpenAll }) {
     date: inv.date,
     btw: <BtwPill rate={inv.rate} />,
     amount: inv.amount,
-    status: statusBadge(inv.status),
+    status: statusBadge(inv.status, t),
   }));
 
   return (
@@ -122,7 +125,7 @@ export function Dashboard({ onUpload, onOpenAll }) {
 
       {/* BTW kwartaaloverzicht */}
       <div>
-        <SectionHeader>BTW {qLabel} · {qPeriod}</SectionHeader>
+        <SectionHeader>{t('dashboard.vatOverviewTitle', { q: qLabel, period: qPeriod })}</SectionHeader>
         {btwItems.length > 0 ? (
           <BtwCard
             btwInkoop={btwInkoop}
@@ -130,31 +133,32 @@ export function Dashboard({ onUpload, onOpenAll }) {
             net={net}
             items={btwItems}
             qPeriod={qPeriod}
+            t={t}
           />
         ) : (
-          <EmptyState message={`Nog geen facturen in ${qLabel}. Upload je eerste factuur om te beginnen.`} />
+          <EmptyState message={t('dashboard.emptyQuarter', { q: qLabel })} />
         )}
       </div>
 
       {/* Recente facturen */}
       <div>
-        <SectionHeader right={recentRows.length > 0 ? <Button variant="ghost" size="sm" onClick={onOpenAll}>Alles bekijken →</Button> : null}>
-          Recente facturen · {qLabel}
+        <SectionHeader right={recentRows.length > 0 ? <Button variant="ghost" size="sm" onClick={onOpenAll}>{t('common.viewAll')}</Button> : null}>
+          {t('dashboard.recentInvoices', { q: qLabel })}
         </SectionHeader>
         {recentRows.length > 0
           ? <InvoiceTable columns={columns} rows={recentRows} onRowClick={() => {}} />
-          : <EmptyState message={`Nog geen facturen in ${qLabel}.`} />
+          : <EmptyState message={t('dashboard.emptyQuarterShort', { q: qLabel })} />
         }
       </div>
     </div>
   );
 }
 
-function BtwCard({ btwInkoop, btwVerkoop, net, items, qPeriod }) {
+function BtwCard({ btwInkoop, btwVerkoop, net, items, qPeriod, t }) {
   const isTerug   = net < 0;
   const netColor  = isTerug ? '#1a6b3a' : '#b94c00';
   const netBg     = isTerug ? '#D2ECD0'  : '#FDEEC4';
-  const netLabel  = isTerug ? 'BTW terug te vragen' : 'BTW te betalen';
+  const netLabel  = isTerug ? t('dashboard.vatToReclaim') : t('dashboard.vatToPayLong');
 
   return (
     <div style={{ background: '#FDEEC4', border: '2px solid #020309', borderRadius: '12px', boxShadow: '3px 3px 0 #020309', overflow: 'hidden' }}>
@@ -162,14 +166,14 @@ function BtwCard({ btwInkoop, btwVerkoop, net, items, qPeriod }) {
       <div style={{ padding: '16px 20px', display: 'flex', gap: '32px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         {items.map(it => (
           <div key={it.rate} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', color: '#666' }}>BTW {it.rate}%</span>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', color: '#666' }}>{t('shell.vatRate', { rate: it.rate })}</span>
             <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: '20px', color: '#020309' }}>{it.btw}</span>
-            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#888' }}>excl. {it.excl}</span>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#888' }}>{t('dashboard.exclAmount', { amount: it.excl })}</span>
           </div>
         ))}
         {btwVerkoop > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', color: '#666' }}>BTW verkoop</span>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', color: '#666' }}>{t('dashboard.vatSales')}</span>
             <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: '20px', color: '#020309' }}>{fmtEur(btwVerkoop)}</span>
           </div>
         )}
@@ -180,7 +184,7 @@ function BtwCard({ btwInkoop, btwVerkoop, net, items, qPeriod }) {
         <div>
           <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '13px', color: netColor }}>{netLabel}</span>
           {!btwVerkoop && (
-            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#888', marginLeft: '8px' }}>— nog geen verkoopfacturen</span>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#888', marginLeft: '8px' }}>{t('dashboard.noSalesInvoicesYet')}</span>
           )}
         </div>
         <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 800, fontSize: '22px', color: netColor }}>{fmtEur(Math.abs(net))}</span>

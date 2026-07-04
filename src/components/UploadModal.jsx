@@ -132,6 +132,7 @@ function FileBadge({ file }) {
 // ─── phase: no API key ───────────────────────────────────────────────────────
 
 function NoKeyPhase({ onClose, onManual }) {
+  const { t } = useApp();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center', textAlign: 'center', padding: '8px 0' }}>
       <div style={{
@@ -143,15 +144,15 @@ function NoKeyPhase({ onClose, onManual }) {
       </div>
       <div>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '15px', marginBottom: '8px' }}>
-          Geen API-sleutel ingesteld
+          {t('upload.noApiKeyTitle')}
         </div>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
-          Voer een Anthropic API-sleutel in via <strong>Instellingen → Bookie AI</strong> om facturen automatisch te scannen.
+          {t('upload.noApiKeyDescBefore')} <strong>{t('chat.noApiKeySettingsPath')}</strong> {t('upload.noApiKeyDescAfter')}
         </div>
       </div>
       <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
-        <ActionBtn onClick={onClose}>Sluiten</ActionBtn>
-        <ActionBtn onClick={onManual} primary>Handmatig invoeren</ActionBtn>
+        <ActionBtn onClick={onClose}>{t('common.close')}</ActionBtn>
+        <ActionBtn onClick={onManual} primary>{t('upload.manualEntry')}</ActionBtn>
       </div>
     </div>
   );
@@ -160,6 +161,7 @@ function NoKeyPhase({ onClose, onManual }) {
 // ─── phase: idle (pick file) ────────────────────────────────────────────────
 
 function IdlePhase({ onPickFile }) {
+  const { t } = useApp();
   const inputRef = useRef(null);
   const [drag, setDrag] = useState(false);
 
@@ -200,10 +202,10 @@ function IdlePhase({ onPickFile }) {
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '14px', color: '#020309' }}>
-            Sleep je factuur hierheen
+            {t('facturen.dragInvoiceHere')}
           </div>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#888', marginTop: '3px' }}>
-            of klik om te bladeren · PDF, JPG, PNG
+            {t('facturen.dragInvoiceHint')}
           </div>
         </div>
       </div>
@@ -214,6 +216,7 @@ function IdlePhase({ onPickFile }) {
 // ─── phase: scanning ────────────────────────────────────────────────────────
 
 function ScanningPhase({ file }) {
+  const { t } = useApp();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center', padding: '24px 0', textAlign: 'center' }}>
       <div style={{ position: 'relative', width: '56px', height: '56px' }}>
@@ -227,10 +230,10 @@ function ScanningPhase({ file }) {
       </div>
       <div>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '15px', marginBottom: '6px' }}>
-          Bezig met scannen…
+          {t('upload.scanning')}
         </div>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#666' }}>
-          Claude leest je factuur en extraheert de BTW-gegevens
+          {t('upload.scanningDesc')}
         </div>
       </div>
       {file && <FileBadge file={file} />}
@@ -242,6 +245,7 @@ function ScanningPhase({ file }) {
 // ─── phase: error ────────────────────────────────────────────────────────────
 
 function ErrorPhase({ error, onRetry, onManual }) {
+  const { t } = useApp();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center', padding: '8px 0', textAlign: 'center' }}>
       <div style={{
@@ -253,7 +257,7 @@ function ErrorPhase({ error, onRetry, onManual }) {
       </div>
       <div>
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '15px', marginBottom: '8px' }}>
-          Scannen mislukt
+          {t('upload.scanFailed')}
         </div>
         <div style={{
           fontFamily: "'DM Mono', monospace", fontSize: '12px', color: '#555',
@@ -264,8 +268,8 @@ function ErrorPhase({ error, onRetry, onManual }) {
         </div>
       </div>
       <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
-        <ActionBtn onClick={onRetry}><span style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}><RefreshCw size={14} />Opnieuw</span></ActionBtn>
-        <ActionBtn onClick={onManual} primary>Handmatig invoeren</ActionBtn>
+        <ActionBtn onClick={onRetry}><span style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}><RefreshCw size={14} />{t('upload.retry')}</span></ActionBtn>
+        <ActionBtn onClick={onManual} primary>{t('upload.manualEntry')}</ActionBtn>
       </div>
     </div>
   );
@@ -274,6 +278,7 @@ function ErrorPhase({ error, onRetry, onManual }) {
 // ─── phase: review ────────────────────────────────────────────────────────────
 
 function ReviewPhase({ fields, setF, setFieldCalc, file, onSave, onClose }) {
+  const { t } = useApp();
   const scanned = !!file;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -292,7 +297,7 @@ function ReviewPhase({ fields, setF, setFieldCalc, file, onSave, onClose }) {
             <Check size={14} color="#D2ECD0" />
           </span>
           <div>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '13px' }}>Factuur gescand</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '13px' }}>{t('upload.invoiceScanned')}</div>
             {file && <FileBadge file={file} />}
           </div>
         </div>
@@ -300,25 +305,25 @@ function ReviewPhase({ fields, setF, setFieldCalc, file, onSave, onClose }) {
 
       {/* Supplier */}
       <div>
-        <FieldLabel>Leverancier</FieldLabel>
-        <TextInput value={fields.supplier} onChange={(v) => setF('supplier', v)} placeholder="Naam leverancier" />
+        <FieldLabel>{t('dashboard.colSupplier')}</FieldLabel>
+        <TextInput value={fields.supplier} onChange={(v) => setF('supplier', v)} placeholder={t('upload.supplierPlaceholder')} />
       </div>
 
       {/* Nr + Date */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         <div>
-          <FieldLabel>Factuurnummer</FieldLabel>
+          <FieldLabel>{t('vk.invoiceNumber')}</FieldLabel>
           <TextInput value={fields.invoice_nr} onChange={(v) => setF('invoice_nr', v)} placeholder="FCT-2026-0001" mono />
         </div>
         <div>
-          <FieldLabel>Datum</FieldLabel>
+          <FieldLabel>{t('dashboard.colDate')}</FieldLabel>
           <TextInput value={fields.date} onChange={(v) => setF('date', v)} placeholder="DD-MM-YYYY" mono />
         </div>
       </div>
 
       {/* BTW rate */}
       <div>
-        <FieldLabel>BTW-tarief</FieldLabel>
+        <FieldLabel>{t('upload.vatRateLabel')}</FieldLabel>
         <div style={{ display: 'flex', gap: '8px' }}>
           {[21, 9, 0].map((r) => (
             <RateBtn key={r} rate={r} active={fields.btw_rate === r} onClick={() => setFieldCalc('btw_rate', r)} />
@@ -329,33 +334,33 @@ function ReviewPhase({ fields, setF, setFieldCalc, file, onSave, onClose }) {
       {/* Amounts */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
         <div>
-          <FieldLabel>Excl. BTW (€)</FieldLabel>
+          <FieldLabel>{t('upload.exclVatAmount')}</FieldLabel>
           <NumInput value={fields.amount_excl} onChange={(v) => setFieldCalc('amount_excl', v)} />
         </div>
         <div>
-          <FieldLabel>BTW-bedrag (€)</FieldLabel>
+          <FieldLabel>{t('upload.vatAmountLabel')}</FieldLabel>
           <NumInput value={fields.btw_amount} onChange={(v) => setF('btw_amount', v)} />
         </div>
         <div>
-          <FieldLabel>Incl. BTW (€)</FieldLabel>
+          <FieldLabel>{t('upload.inclVatAmount')}</FieldLabel>
           <NumInput value={fields.amount_incl} onChange={(v) => setF('amount_incl', v)} />
         </div>
       </div>
 
       {/* Status */}
       <div>
-        <FieldLabel>Status</FieldLabel>
+        <FieldLabel>{t('dashboard.colStatus')}</FieldLabel>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <StatusBtn label="Betaald"     active={fields.status === 'paid'}    bg="#D2ECD0" onClick={() => setF('status', 'paid')} />
-          <StatusBtn label="Openstaand"  active={fields.status === 'pending'} bg="#FDEEC4" onClick={() => setF('status', 'pending')} />
-          <StatusBtn label="Controleren" active={fields.status === 'review'}  bg="#E5F5F9" onClick={() => setF('status', 'review')} />
+          <StatusBtn label={t('common.status.paid')}     active={fields.status === 'paid'}    bg="#D2ECD0" onClick={() => setF('status', 'paid')} />
+          <StatusBtn label={t('common.status.pending')}  active={fields.status === 'pending'} bg="#FDEEC4" onClick={() => setF('status', 'pending')} />
+          <StatusBtn label={t('upload.statusReview')}     active={fields.status === 'review'}  bg="#E5F5F9" onClick={() => setF('status', 'review')} />
         </div>
       </div>
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: '10px', paddingTop: '4px' }}>
-        <ActionBtn onClick={onClose}>Annuleren</ActionBtn>
-        <ActionBtn onClick={onSave} primary>Factuur opslaan</ActionBtn>
+        <ActionBtn onClick={onClose}>{t('common.cancel')}</ActionBtn>
+        <ActionBtn onClick={onSave} primary>{t('upload.saveInvoice')}</ActionBtn>
       </div>
     </div>
   );
@@ -364,7 +369,7 @@ function ReviewPhase({ fields, setF, setFieldCalc, file, onSave, onClose }) {
 // ─── main modal ──────────────────────────────────────────────────────────────
 
 export function UploadModal({ file: initialFile, onSaved, onClose, manualMode = false }) {
-  const { apiKey, addInvoice } = useApp();
+  const { apiKey, addInvoice, t } = useApp();
   const scanRef = useRef(false);
 
   const [phase, setPhase] = useState(() => {
@@ -421,7 +426,7 @@ export function UploadModal({ file: initialFile, onSaved, onClose, manualMode = 
       });
       setPhase('review');
     } catch (err) {
-      setErrorMsg(err.message || 'Onbekende fout');
+      setErrorMsg(err.message || t('upload.unknownError'));
       setPhase('error');
     }
   }
@@ -444,7 +449,7 @@ export function UploadModal({ file: initialFile, onSaved, onClose, manualMode = 
 
     const invoice = {
       id:         uid(),
-      supplier:   fields.supplier   || 'Onbekend',
+      supplier:   fields.supplier   || t('lev.unknownSupplier'),
       nr:         fields.invoice_nr || '-',
       date:       normalizeDate(fields.date),
       rate:       Number(fields.btw_rate),
@@ -494,7 +499,7 @@ export function UploadModal({ file: initialFile, onSaved, onClose, manualMode = 
           padding: '16px 20px', borderBottom: '2px solid #020309', flexShrink: 0,
         }}>
           <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '16px', color: '#020309' }}>
-            Factuur uploaden
+            {t('shell.uploadInvoice')}
           </span>
           <button onClick={onClose} style={{
             background: 'none', border: 'none', cursor: 'pointer',

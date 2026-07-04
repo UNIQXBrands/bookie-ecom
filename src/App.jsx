@@ -14,21 +14,23 @@ import { Verkoop }       from './screens/Verkoop';
 import { Landing, ResetPasswordScreen } from './screens/Landing';
 import { data, nav }     from './data/data';
 import { supabase }      from './lib/supabase';
-import { AppProvider }   from './context/AppContext';
+import { AppProvider, useApp } from './context/AppContext';
 import * as Icons        from 'lucide-react';
 
-const TITLES = {
-  dashboard:    { title: 'Dashboard',        sub: 'Q2 2026 · jouw overzicht in één oogopslag' },
-  inkoop:       { title: 'Inkoopfacturen',   sub: 'Facturen van leveranciers' },
-  verkoop:      { title: 'Verkoopfacturen',  sub: 'Opstellen, versturen en bijhouden' },
-  btw:          { title: 'BTW-aangifte',     sub: 'Q2 2026 · apr–jun' },
-  onboarding:   { title: 'Aan de slag',      sub: null },
-  balans:       { title: 'Balans',           sub: 'Activa en passiva per peildatum' },
-  leveranciers: { title: 'Leveranciers',     sub: null },
-  instellingen: { title: 'Instellingen',     sub: 'Profiel, koppelingen en notificaties' },
-};
+function getTitles(t) {
+  return {
+    dashboard:    { title: t('title.dashboard'),   sub: t('title.dashboardSub', { q: 'Q2 2026' }) },
+    inkoop:       { title: t('title.purchases'),   sub: t('title.purchasesSub') },
+    verkoop:      { title: t('title.sales'),       sub: t('title.salesSub') },
+    btw:          { title: t('title.vatReturn'),   sub: 'Q2 2026 · apr–jun' },
+    onboarding:   { title: t('title.onboarding'),  sub: null },
+    balans:       { title: t('title.balance'),     sub: t('title.balanceSub') },
+    leveranciers: { title: t('title.suppliers'),   sub: null },
+    instellingen: { title: t('title.settings'),    sub: t('title.settingsSub') },
+  };
+}
 
-function Topbar({ title, sub, actions, onSignOut }) {
+function Topbar({ title, sub, actions, onSignOut, logoutLabel }) {
   return (
     <div style={{
       height: '64px', flexShrink: 0,
@@ -44,12 +46,12 @@ function Topbar({ title, sub, actions, onSignOut }) {
         {actions}
         <button
           onClick={onSignOut}
-          title="Uitloggen"
+          title={logoutLabel}
           style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 12px', background: 'transparent', border: '1.5px solid #d4cbbe', borderRadius: '9px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: '12px', color: '#888' }}
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#020309'; e.currentTarget.style.color = '#020309'; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#d4cbbe'; e.currentTarget.style.color = '#888'; }}
         >
-          <Icons.LogOut size={14} /> Uitloggen
+          <Icons.LogOut size={14} /> {logoutLabel}
         </button>
       </div>
     </div>
@@ -113,6 +115,7 @@ export function App() {
 }
 
 function AppShell({ onSignOut }) {
+  const { t } = useApp();
   const [view,  setView]  = useState('dashboard');
   function navigate(v) { setView(v === 'facturen' ? 'inkoop' : v); }
   const [toast, setToast] = useState(null);
@@ -150,19 +153,25 @@ function AppShell({ onSignOut }) {
 
   const onSaved = useCallback((invoice) => {
     closeModal();
-    const rate = invoice.rate != null ? `BTW ${invoice.rate}%` : 'BTW onbekend';
-    fireToast(`Factuur opgeslagen · ${invoice.supplier} · ${rate} · ${invoice.excl}`);
-  }, [closeModal, fireToast]);
+    const rate = invoice.rate != null ? t('shell.vatRate', { rate: invoice.rate }) : t('shell.vatUnknown');
+    fireToast(t('shell.invoiceSaved', { supplier: invoice.supplier, rate, excl: invoice.excl }));
+  }, [closeModal, fireToast, t]);
 
+  const NAV_LABELS = {
+    dashboard: t('nav.dashboard'), facturen: t('nav.invoices'), inkoop: t('nav.purchases'),
+    verkoop: t('nav.sales'), btw: t('nav.vatReturn'), balans: t('nav.balance'),
+    leveranciers: t('nav.suppliers'), instellingen: t('nav.settings'),
+  };
   function mapNavItem(n) {
     const Icon = Icons[n.icon];
-    return { ...n, icon: Icon ? <Icon size={16} /> : null, children: n.children?.map(mapNavItem) };
+    return { ...n, label: NAV_LABELS[n.key] || n.label, icon: Icon ? <Icon size={16} /> : null, children: n.children?.map(mapNavItem) };
   }
   const allNavItems = (data.nav || nav).map(mapNavItem);
   const navItems    = allNavItems.filter((n) => n.key !== 'instellingen');
   const bottomItems = allNavItems.filter((n) => n.key === 'instellingen');
 
-  const t = TITLES[view] || { title: view };
+  const titles = getTitles(t);
+  const titleInfo = titles[view] || { title: view };
 
   let screen;
   if      (view === 'dashboard')                      screen = <Dashboard   onUpload={onUpload} onOpenAll={() => setView('inkoop')} />;
@@ -175,7 +184,7 @@ function AppShell({ onSignOut }) {
   else if (view === 'instellingen')                    screen = <Instellingen />;
   else screen = (
     <div style={{ padding: '48px 24px', color: '#888', fontSize: '14px', fontFamily: "'DM Sans', sans-serif" }}>
-      Deze sectie is nog leeg.
+      {t('shell.emptySection')}
     </div>
   );
 
@@ -184,9 +193,10 @@ function AppShell({ onSignOut }) {
       <Sidebar brand="Bookie" active={view} onSelect={navigate} items={navItems} bottomItems={bottomItems} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <Topbar
-          title={t.title}
-          sub={t.sub}
+          title={titleInfo.title}
+          sub={titleInfo.sub}
           onSignOut={onSignOut}
+          logoutLabel={t('shell.logout')}
           actions={
             view !== 'onboarding' ? (
               <>
@@ -206,14 +216,14 @@ function AppShell({ onSignOut }) {
                 />
                 {(view === 'inkoop' || view === 'facturen') && (
                   <Button variant="default" icon={<Icons.PenLine size={16} />} onClick={onManualAdd}>
-                    Handmatig boeken
+                    {t('shell.manualBook')}
                   </Button>
                 )}
                 <Button variant="default" icon={<Icons.Files size={16} />} onClick={() => bulkInputRef.current?.click()}>
-                  Bulk upload
+                  {t('shell.bulkUpload')}
                 </Button>
                 <Button variant="primary" icon={<Icons.Upload size={16} />} onClick={() => onUpload()}>
-                  Factuur uploaden
+                  {t('shell.uploadInvoice')}
                 </Button>
               </>
             ) : null

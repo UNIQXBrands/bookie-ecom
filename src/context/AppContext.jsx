@@ -5,6 +5,7 @@ import {
   fetchSalesInvoices, upsertSalesInvoice, deleteSalesInvoice,
   fetchSettings, upsertSettings,
 } from '../lib/db';
+import { t as translate } from '../i18n/translations';
 
 const AppContext = createContext(null);
 
@@ -125,6 +126,7 @@ function readLocalCompanyProfile() {
 export function AppProvider({ children }) {
   const [apiKey, setApiKeyState] = useState(() => localStorage.getItem('bookie_api_key') || '');
   const [companyProfile, setCompanyProfileState] = useState(readLocalCompanyProfile);
+  const [language, setLanguageState] = useState(() => localStorage.getItem('bookie_language') || 'nl');
 
   const [closedQuarters, setClosedQuarters] = useState(() => {
     try {
@@ -166,6 +168,8 @@ export function AppProvider({ children }) {
           localStorage.setItem('bookie_api_key', settings.apiKey);
           setCompanyProfileState(settings.companyProfile);
           localStorage.setItem('bookie_company_info', JSON.stringify(settings.companyProfile));
+          setLanguageState(settings.language);
+          localStorage.setItem('bookie_language', settings.language);
         } else {
           const localKey = localStorage.getItem('bookie_api_key') || '';
           const localProfile = readLocalCompanyProfile();
@@ -193,6 +197,14 @@ export function AppProvider({ children }) {
     localStorage.setItem('bookie_company_info', JSON.stringify(profile));
     upsertSettings({ companyProfile: profile }).catch((err) => console.error('Failed to save company profile:', err));
   }, []);
+
+  const setLanguage = useCallback((lang) => {
+    setLanguageState(lang);
+    localStorage.setItem('bookie_language', lang);
+    upsertSettings({ language: lang }).catch((err) => console.error('Failed to save language:', err));
+  }, []);
+
+  const t = useCallback((key, vars) => translate(language, key, vars), [language]);
 
   const addInvoice = useCallback(async (invoice, fileDataUrl) => {
     let filePath = null;
@@ -233,6 +245,7 @@ export function AppProvider({ children }) {
     <AppContext.Provider value={{
       apiKey, setApiKey,
       companyProfile, setCompanyProfile,
+      language, setLanguage, t,
       userInvoices, addInvoice, updateInvoice, removeInvoice,
       salesInvoices, saveSalesInvoice, removeSalesInvoice,
       userQuarters, loading, closeQuarter, reopenQuarter,

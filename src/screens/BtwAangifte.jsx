@@ -14,9 +14,8 @@ function SectionHeader({ children }) {
   );
 }
 
-const RATE_LABELS = { 21: 'Standaardtarief', 9: 'Verlaagd tarief', 0: 'Vrijgesteld / 0%' };
-
-function computeBtw(invoices) {
+function computeBtw(invoices, t) {
+  const RATE_LABELS = { 21: t('btw.rate.standard'), 9: t('btw.rate.reduced'), 0: t('btw.rate.exempt') };
   const byRate = {};
   invoices.forEach((inv) => {
     const r = inv.rate ?? 0;
@@ -30,7 +29,7 @@ function computeBtw(invoices) {
     .sort(([a], [b]) => Number(b) - Number(a))
     .map(([rate, { excl, btw, invoices }]) => ({
       rate:    Number(rate),
-      label:   RATE_LABELS[Number(rate)] || `${rate}% tarief`,
+      label:   RATE_LABELS[Number(rate)] || t('btw.rate.other', { rate }),
       exclNum: excl,
       btwNum:  btw,
       excl:    fmtEur(excl),
@@ -78,15 +77,17 @@ function QuarterSelector({ quarters, selectedId, onChange }) {
 // ─── invoice detail table ────────────────────────────────────────────────────
 
 function InvoiceDetailTable({ invoices }) {
+  const { t } = useApp();
+  const headers = [t('btw.colSupplier'), t('btw.colInvoiceNr'), t('btw.colDate'), t('btw.colExclVat'), t('btw.colVatAmount')];
   return (
     <div style={{ borderTop: '1.5px solid #e8e0d0', overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'DM Sans', sans-serif", fontSize: '12px' }}>
         <thead>
           <tr style={{ background: '#F5EFE0' }}>
-            {['Leverancier', 'Factuurnr', 'Datum', 'Excl. BTW', 'BTW-bedrag'].map((h) => (
+            {headers.map((h, i) => (
               <th key={h} style={{
                 padding: '7px 12px',
-                textAlign: h === 'Excl. BTW' || h === 'BTW-bedrag' ? 'right' : 'left',
+                textAlign: i >= 3 ? 'right' : 'left',
                 fontWeight: 700, fontSize: '10px', letterSpacing: '0.5px',
                 textTransform: 'uppercase', color: '#666',
               }}>{h}</th>
@@ -107,7 +108,7 @@ function InvoiceDetailTable({ invoices }) {
         <tfoot>
           <tr style={{ borderTop: '2px solid #020309', background: '#F5EFE0' }}>
             <td colSpan={3} style={{ padding: '8px 12px', fontWeight: 700, fontSize: '11px', color: '#444' }}>
-              Totaal ({invoices.length} facturen)
+              {t('btw.totalInvoices', { n: invoices.length })}
             </td>
             <td style={{ padding: '8px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 700 }}>
               {fmtEur(invoices.reduce((s, i) => s + (i.amountExcl || 0), 0))}
@@ -125,6 +126,7 @@ function InvoiceDetailTable({ invoices }) {
 // ─── rate card ────────────────────────────────────────────────────────────────
 
 function RateCard({ row }) {
+  const { t } = useApp();
   const [open, setOpen] = useState(false);
 
   return (
@@ -148,7 +150,7 @@ function RateCard({ row }) {
           <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
             <span style={{ fontWeight: 700, fontSize: '14px', fontFamily: "'DM Sans', sans-serif" }}>{row.label}</span>
             <span style={{ fontSize: '12px', color: '#888', fontFamily: "'DM Mono', monospace" }}>
-              Inkoop excl. BTW {row.excl} · {row.invoices.length} facturen
+              {t('btw.purchaseExclVat', { amount: row.excl, n: row.invoices.length })}
             </span>
           </div>
         </div>
@@ -166,7 +168,7 @@ function RateCard({ row }) {
 // ─── main screen ─────────────────────────────────────────────────────────────
 
 export function BtwAangifte() {
-  const { userQuarters } = useApp();
+  const { userQuarters, t } = useApp();
 
   const sortedQuarters = useMemo(
     () => [...userQuarters].sort((a, b) => b.year - a.year || b.q - a.q),
@@ -184,7 +186,7 @@ export function BtwAangifte() {
     return activeQuarter.months.flatMap((m) => m.invoices);
   }, [activeQuarter]);
 
-  const { rateRows, items, total } = computeBtw(quarterInvoices);
+  const { rateRows, items, total } = computeBtw(quarterInvoices, t);
 
   if (sortedQuarters.length === 0) {
     return (
@@ -195,8 +197,8 @@ export function BtwAangifte() {
           borderRadius: '12px', boxShadow: '3px 3px 0 #020309',
           fontFamily: "'DM Sans', sans-serif",
         }}>
-          <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '8px' }}>Nog geen facturen</div>
-          <div style={{ fontSize: '13px', color: '#888' }}>Upload facturen om je BTW-aangifte te berekenen.</div>
+          <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '8px' }}>{t('btw.emptyTitle')}</div>
+          <div style={{ fontSize: '13px', color: '#888' }}>{t('btw.emptyDesc')}</div>
         </div>
       </div>
     );
@@ -220,20 +222,20 @@ export function BtwAangifte() {
       }}>
         <Info size={16} style={{ flexShrink: 0, marginTop: '1px' }} />
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', lineHeight: 1.55, color: '#020309' }}>
-          <strong>Dit zijn je inkoopfacturen (voorbelasting)</strong> — de BTW die jij betaald hebt aan leveranciers. Dit vul je in bij <strong>Rubriek 5b</strong> van de BTW-aangifte. Het bedrag dat je uiteindelijk moet betalen of terugkrijgt hangt ook af van de BTW op je verkopen (verschuldigde BTW), die je hier nog niet bijhoudt.
+          <strong>{t('btw.explainerBold')}</strong> {t('btw.explainerBody1')} <strong>Rubriek 5b</strong> {t('btw.explainerBody2')}
         </div>
       </div>
 
       <BtwSummary
-        title={`Voorbelasting (inkoop) · ${activeQuarter?.label ?? ''}`}
-        sub={`BTW betaald aan leveranciers — Rubriek 5b · ${activeQuarter?.period ?? ''}`}
+        title={t('btw.inputVatTitle', { q: activeQuarter?.label ?? '' })}
+        sub={t('btw.inputVatSub', { period: activeQuarter?.period ?? '' })}
         items={items}
         total={total}
-        totalLabel="Totale voorbelasting"
+        totalLabel={t('btw.totalInputVat')}
       />
 
       <div>
-        <SectionHeader>Opbouw per tarief — klik om facturen te zien</SectionHeader>
+        <SectionHeader>{t('btw.breakdownByRate')}</SectionHeader>
         {rateRows.length === 0 ? (
           <div style={{
             padding: '32px', textAlign: 'center',
@@ -241,7 +243,7 @@ export function BtwAangifte() {
             borderRadius: '12px', boxShadow: '3px 3px 0 #020309',
             fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#888',
           }}>
-            Geen facturen in dit kwartaal.
+            {t('btw.noInvoicesThisQuarter')}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -255,10 +257,10 @@ export function BtwAangifte() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Info size={18} />
             <div style={{ fontSize: '13px', maxWidth: '440px' }}>
-              <strong style={{ fontWeight: 700 }}>Klaar om aan te geven.</strong> Exporteer het overzicht en neem de bedragen over bij de Belastingdienst.
+              <strong style={{ fontWeight: 700 }}>{t('btw.readyTitle')}</strong> {t('btw.readyDesc')}
             </div>
           </div>
-          <Button variant="primary" icon={<Download size={16} />}>Exporteren</Button>
+          <Button variant="primary" icon={<Download size={16} />}>{t('common.export')}</Button>
         </div>
       </Card>
     </div>

@@ -11,16 +11,16 @@ import { ChevronRight, Upload, FolderOpen, Eye, Paperclip, Trash2, Lock, LockOpe
 // ─── shared ──────────────────────────────────────────────────────────────────
 
 const STATUS_CYCLE = { pending: 'paid', paid: 'review', review: 'pending' };
-const STATUS_LABEL = { paid: 'Betaald', pending: 'Openstaand', review: 'Te controleren' };
 
 function StatusToggle({ status, invId }) {
-  const { updateInvoice } = useApp();
+  const { updateInvoice, t } = useApp();
+  const STATUS_LABEL = { paid: t('common.status.paid'), pending: t('common.status.pending'), review: t('common.status.review') };
   function cycle(e) {
     e.stopPropagation();
     updateInvoice(invId, { status: STATUS_CYCLE[status] || 'pending' });
   }
   return (
-    <button onClick={cycle} title="Klik om status te wijzigen"
+    <button onClick={cycle} title={t('facturen.clickToChangeStatus')}
       style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
       <Badge variant={status} dot>{STATUS_LABEL[status] ?? status}</Badge>
     </button>
@@ -74,10 +74,11 @@ function Breadcrumb({ items }) {
 }
 
 function StatusPill({ status }) {
+  const { t } = useApp();
   const map = {
-    filed:       { bg: '#D2ECD0', label: 'Ingediend' },
-    in_progress: { bg: '#FDEEC4', label: 'Lopend' },
-    empty:       { bg: '#FAF3E3', label: 'Leeg' },
+    filed:       { bg: '#D2ECD0', label: t('facturen.filed') },
+    in_progress: { bg: '#FDEEC4', label: t('facturen.inProgress') },
+    empty:       { bg: '#FAF3E3', label: t('facturen.empty') },
   };
   const { bg, label } = map[status] || map.empty;
   return (
@@ -92,6 +93,7 @@ function StatusPill({ status }) {
 // ─── level 1: kwartalen ───────────────────────────────────────────────────────
 
 function KwartaalOverzicht({ onSelectQuarter, activeQuarters }) {
+  const { t } = useApp();
   const years = [...new Set(activeQuarters.map((q) => q.year))].sort((a, b) => b - a);
 
   if (activeQuarters.length === 0) {
@@ -103,8 +105,8 @@ function KwartaalOverzicht({ onSelectQuarter, activeQuarters }) {
           borderRadius: '12px', boxShadow: '3px 3px 0 #020309',
           fontFamily: "'DM Sans', sans-serif",
         }}>
-          <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '8px' }}>Nog geen facturen</div>
-          <div style={{ fontSize: '13px', color: '#888' }}>Upload je eerste factuur om te beginnen. Kwartalen verschijnen hier automatisch.</div>
+          <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '8px' }}>{t('facturen.emptyTitle')}</div>
+          <div style={{ fontSize: '13px', color: '#888' }}>{t('facturen.emptyDesc')}</div>
         </div>
       </div>
     );
@@ -120,7 +122,7 @@ function KwartaalOverzicht({ onSelectQuarter, activeQuarters }) {
           <div key={year}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '12px' }}>
               <h2 style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '22px', letterSpacing: '-0.3px', color: '#020309' }}>{year}</h2>
-              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#888' }}>{yearTotal} facturen</span>
+              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#888' }}>{t('common.invoiceCount', { n: yearTotal })}</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
               {qs.map((q) => (
@@ -135,7 +137,7 @@ function KwartaalOverzicht({ onSelectQuarter, activeQuarters }) {
 }
 
 function QuarterCard({ quarter: q, onClick }) {
-  const { closeQuarter, reopenQuarter } = useApp();
+  const { closeQuarter, reopenQuarter, t } = useApp();
   const [hovered, setHovered] = useState(false);
   const isFiled = q.status === 'filed';
 
@@ -165,12 +167,12 @@ function QuarterCard({ quarter: q, onClick }) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
         <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: '18px', color: isFiled ? '#888' : '#020309' }}>{q.totalExcl}</span>
-        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#888' }}>excl. BTW</span>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#888' }}>{t('facturen.exclVat')}</span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1.5px solid #e8e0d0' }}>
-        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#444' }}>{q.invoiceCount} facturen</span>
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '12px', fontWeight: 600, color: '#444' }}>BTW {q.btwTotal}</span>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#444' }}>{t('common.invoiceCount', { n: q.invoiceCount })}</span>
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '12px', fontWeight: 600, color: '#444' }}>{t('facturen.vatAmount', { amount: q.btwTotal })}</span>
       </div>
 
       <button
@@ -187,7 +189,7 @@ function QuarterCard({ quarter: q, onClick }) {
         onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8'; }}
         onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
       >
-        {isFiled ? <><LockOpen size={11} /> Heropenen</> : <><Lock size={11} /> Afsluiten</>}
+        {isFiled ? <><LockOpen size={11} /> {t('facturen.reopen')}</> : <><Lock size={11} /> {t('facturen.close')}</>}
       </button>
     </div>
   );
@@ -196,13 +198,13 @@ function QuarterCard({ quarter: q, onClick }) {
 // ─── level 2: maanden ────────────────────────────────────────────────────────
 
 function MaandOverzicht({ quarter, onBack, onSelectMonth }) {
-  const { closeQuarter, reopenQuarter } = useApp();
+  const { closeQuarter, reopenQuarter, t } = useApp();
   const isFiled = quarter.status === 'filed';
 
   return (
     <div style={{ padding: '24px' }}>
       <Breadcrumb items={[
-        { label: 'Facturen', onClick: onBack },
+        { label: t('nav.invoices'), onClick: onBack },
         { label: quarter.label },
       ]} />
 
@@ -216,18 +218,18 @@ function MaandOverzicht({ quarter, onBack, onSelectMonth }) {
       <div style={{ marginTop: '28px', background: isFiled ? '#E8E0D0' : '#FDEEC4', border: '2px solid #020309', borderRadius: '12px', boxShadow: '3px 3px 0 #020309', padding: '18px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '15px' }}>Totaal {quarter.label}</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '15px' }}>{t('facturen.totalLabel', { q: quarter.label })}</div>
             <StatusPill status={quarter.status} />
           </div>
           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#444' }}>{quarter.period}</div>
         </div>
         <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
           <div>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', color: '#444' }}>Excl. BTW</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', color: '#444' }}>{t('facturen.exclVatLabel')}</div>
             <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: '22px' }}>{quarter.totalExcl}</div>
           </div>
           <div style={{ paddingLeft: '24px', borderLeft: '2px solid #020309' }}>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', color: '#444' }}>BTW</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', color: '#444' }}>{t('facturen.vatLabel')}</div>
             <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: '22px' }}>{quarter.btwTotal}</div>
           </div>
           <button
@@ -243,7 +245,7 @@ function MaandOverzicht({ quarter, onBack, onSelectMonth }) {
               cursor: 'pointer',
             }}
           >
-            {isFiled ? <><LockOpen size={14} /> Heropenen</> : <><Lock size={14} /> Kwartaal afsluiten</>}
+            {isFiled ? <><LockOpen size={14} /> {t('facturen.reopen')}</> : <><Lock size={14} /> {t('facturen.closeQuarter')}</>}
           </button>
         </div>
       </div>
@@ -252,6 +254,7 @@ function MaandOverzicht({ quarter, onBack, onSelectMonth }) {
 }
 
 function MonthCard({ month: m, onClick }) {
+  const { t } = useApp();
   const [hovered, setHovered] = useState(false);
   const isEmpty = m.invoiceCount === 0;
 
@@ -277,24 +280,24 @@ function MonthCard({ month: m, onClick }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '17px', color: '#020309' }}>{m.label}</span>
         {isEmpty
-          ? <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#888' }}>Leeg</span>
+          ? <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#888' }}>{t('facturen.empty')}</span>
           : <FolderOpen size={16} color="#888" />
         }
       </div>
 
       {isEmpty ? (
         <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#888' }}>
-          Nog geen facturen. Klik om te uploaden.
+          {t('facturen.monthEmptyDesc')}
         </div>
       ) : (
         <>
           <div>
             <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: '20px', color: '#020309' }}>{m.totalExcl}</div>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#888', marginTop: '2px' }}>excl. BTW</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#888', marginTop: '2px' }}>{t('facturen.exclVat')}</div>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1.5px solid #e8e0d0' }}>
-            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#444' }}>{m.invoiceCount} facturen</span>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '12px', fontWeight: 600, color: '#444' }}>BTW {m.btwTotal}</span>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#444' }}>{t('common.invoiceCount', { n: m.invoiceCount })}</span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '12px', fontWeight: 600, color: '#444' }}>{t('facturen.vatAmount', { amount: m.btwTotal })}</span>
           </div>
         </>
       )}
@@ -304,24 +307,28 @@ function MonthCard({ month: m, onClick }) {
 
 // ─── level 3: facturen van een maand ─────────────────────────────────────────
 
-const COLUMNS = [
-  { key: 'supplier', label: 'Leverancier' },
-  { key: 'nr',       label: 'Factuurnr',  mono: true },
-  { key: 'date',     label: 'Datum',      mono: true },
-  { key: 'btw',      label: 'BTW' },
-  { key: 'excl',     label: 'Excl. BTW',  mono: true, align: 'right' },
-  { key: 'amount',   label: 'Totaal',     mono: true, align: 'right' },
-  { key: 'status',   label: 'Status' },
-  { key: 'preview',  label: '',           width: '40px', align: 'center' },
-  { key: 'delete',   label: '',           width: '40px', align: 'center' },
-];
+function getColumns(t) {
+  return [
+    { key: 'supplier', label: t('facturen.colSupplier') },
+    { key: 'nr',       label: t('facturen.colInvoiceNr'), mono: true },
+    { key: 'date',     label: t('facturen.colDate'),      mono: true },
+    { key: 'btw',      label: t('facturen.colVat') },
+    { key: 'excl',     label: t('facturen.colExclVat'),   mono: true, align: 'right' },
+    { key: 'amount',   label: t('facturen.colTotal'),     mono: true, align: 'right' },
+    { key: 'status',   label: t('facturen.colStatus') },
+    { key: 'preview',  label: '',           width: '40px', align: 'center' },
+    { key: 'delete',   label: '',           width: '40px', align: 'center' },
+  ];
+}
 
-const TABS = [
-  { key: 'all',     label: 'Alle' },
-  { key: 'pending', label: 'Openstaand' },
-  { key: 'review',  label: 'Te controleren' },
-  { key: 'paid',    label: 'Betaald' },
-];
+function getTabs(t) {
+  return [
+    { key: 'all',     label: t('facturen.tab.all') },
+    { key: 'pending', label: t('common.status.pending') },
+    { key: 'review',  label: t('common.status.review') },
+    { key: 'paid',    label: t('common.status.paid') },
+  ];
+}
 
 const tabStyle = (active) => ({
   padding: '7px 14px',
@@ -337,7 +344,7 @@ const tabStyle = (active) => ({
 });
 
 function AttachBtn({ invId, onAttached }) {
-  const { updateInvoice } = useApp();
+  const { updateInvoice, t } = useApp();
   const inputRef = useState(() => { const r = { current: null }; return r; })[0];
   function handleFile(e) {
     const f = e.target.files?.[0];
@@ -357,7 +364,7 @@ function AttachBtn({ invId, onAttached }) {
       <input ref={inputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} onChange={handleFile} />
       <button
         onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
-        title="Bestand koppelen"
+        title={t('facturen.attachFile')}
         style={{
           background: '#FFFFFF', border: '1.5px solid #aaa', borderRadius: '7px',
           cursor: 'pointer', padding: '4px 5px',
@@ -374,6 +381,7 @@ function AttachBtn({ invId, onAttached }) {
 }
 
 function MonthTotalsBar({ invoices, count }) {
+  const { t } = useApp();
   const totExcl = invoices.reduce((s, i) => s + (i.amountExcl || 0), 0);
   const totBtw  = invoices.reduce((s, i) => s + (i.btwAmount  || 0), 0);
   const totIncl = invoices.reduce((s, i) => s + (i.amountIncl || 0), 0);
@@ -398,12 +406,12 @@ function MonthTotalsBar({ invoices, count }) {
     }}>
       {/* count */}
       <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#888', marginRight: '20px' }}>
-        {count} facturen
+        {t('common.invoiceCount', { n: count })}
       </span>
 
       {/* excl */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', marginRight: '20px' }}>
-        <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '9px', letterSpacing: '0.8px', textTransform: 'uppercase', color: '#888' }}>Excl. BTW</span>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '9px', letterSpacing: '0.8px', textTransform: 'uppercase', color: '#888' }}>{t('facturen.exclVatLabel')}</span>
         <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 600, fontSize: '14px', color: '#020309' }}>{fmtEur(totExcl)}</span>
       </div>
 
@@ -413,7 +421,7 @@ function MonthTotalsBar({ invoices, count }) {
       {/* btw per rate */}
       {rateBreakdown.map(([rate, btw]) => (
         <div key={rate} style={{ display: 'flex', flexDirection: 'column', gap: '1px', marginRight: '16px' }}>
-          <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '9px', letterSpacing: '0.8px', textTransform: 'uppercase', color: '#888' }}>BTW {rate}%</span>
+          <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '9px', letterSpacing: '0.8px', textTransform: 'uppercase', color: '#888' }}>{t('shell.vatRate', { rate })}</span>
           <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 600, fontSize: '14px', color: '#020309' }}>{fmtEur(btw)}</span>
         </div>
       ))}
@@ -423,7 +431,7 @@ function MonthTotalsBar({ invoices, count }) {
 
       {/* total btw */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', marginRight: '20px' }}>
-        <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '9px', letterSpacing: '0.8px', textTransform: 'uppercase', color: '#888' }}>BTW totaal</span>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '9px', letterSpacing: '0.8px', textTransform: 'uppercase', color: '#888' }}>{t('facturen.vatTotal')}</span>
         <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: '14px', color: '#020309' }}>{fmtEur(totBtw)}</span>
       </div>
 
@@ -435,7 +443,7 @@ function MonthTotalsBar({ invoices, count }) {
         display: 'flex', flexDirection: 'column', gap: '1px', alignItems: 'flex-end',
         background: '#020309', borderRadius: '8px', padding: '6px 14px',
       }}>
-        <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '9px', letterSpacing: '0.8px', textTransform: 'uppercase', color: '#888' }}>Incl. BTW</span>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '9px', letterSpacing: '0.8px', textTransform: 'uppercase', color: '#888' }}>{t('facturen.inclVat')}</span>
         <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: '17px', color: '#FAF3E3' }}>{fmtEur(totIncl)}</span>
       </div>
     </div>
@@ -443,7 +451,9 @@ function MonthTotalsBar({ invoices, count }) {
 }
 
 function FactuurLijst({ quarter, month, onBack, onBackToQuarter, onUpload, onManualAdd }) {
-  const { removeInvoice, updateInvoice } = useApp();
+  const { removeInvoice, updateInvoice, t } = useApp();
+  const COLUMNS = getColumns(t);
+  const TABS = getTabs(t);
   const [filter,         setFilter]         = useState('all');
   const [previewInvoice, setPreviewInvoice] = useState(null);
   const [attached,       setAttached]       = useState({});
@@ -494,7 +504,7 @@ function FactuurLijst({ quarter, month, onBack, onBackToQuarter, onUpload, onMan
       preview: hasFile ? (
         <button
           onClick={(e) => { e.stopPropagation(); setPreviewInvoice(inv); }}
-          title="Factuur bekijken"
+          title={t('facturen.viewInvoice')}
           style={{
             background: '#FDEEC4', border: '1.5px solid #020309', borderRadius: '7px',
             cursor: 'pointer', padding: '4px 5px',
@@ -515,7 +525,7 @@ function FactuurLijst({ quarter, month, onBack, onBackToQuarter, onUpload, onMan
       delete: (
         <button
           onClick={(e) => { e.stopPropagation(); setConfirmDelete(inv); }}
-          title="Factuur verwijderen"
+          title={t('facturen.deleteInvoiceTitle')}
           style={{
             background: 'transparent', border: '1.5px solid transparent', borderRadius: '7px',
             cursor: 'pointer', padding: '4px 5px',
@@ -547,16 +557,16 @@ function FactuurLijst({ quarter, month, onBack, onBackToQuarter, onUpload, onMan
   return (
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <Breadcrumb items={[
-        { label: 'Facturen',     onClick: onBack },
-        { label: quarter.label,  onClick: onBackToQuarter },
+        { label: t('nav.invoices'), onClick: onBack },
+        { label: quarter.label,     onClick: onBackToQuarter },
         { label: month.label },
       ]} />
 
       <div style={{ display: 'flex', gap: '12px', alignItems: 'stretch' }}>
         <div style={{ flex: 1 }}>
           <UploadZone
-            title="Sleep een factuur hierheen"
-            hint="of klik om te bladeren · PDF, JPG, PNG"
+            title={t('facturen.dragInvoiceHere')}
+            hint={t('facturen.dragInvoiceHint')}
             onFile={onUpload}
             icon={<Upload size={20} />}
           />
@@ -578,15 +588,15 @@ function FactuurLijst({ quarter, month, onBack, onBackToQuarter, onUpload, onMan
             <span style={{ width: '36px', height: '36px', background: '#FDEEC4', border: '2px solid #020309', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <PenLine size={16} />
             </span>
-            <span style={{ fontWeight: 700, fontSize: '12px', color: '#020309', whiteSpace: 'nowrap' }}>Handmatig boeken</span>
-            <span style={{ fontSize: '11px', color: '#888' }}>Geen bestand nodig</span>
+            <span style={{ fontWeight: 700, fontSize: '12px', color: '#020309', whiteSpace: 'nowrap' }}>{t('shell.manualBook')}</span>
+            <span style={{ fontSize: '11px', color: '#888' }}>{t('facturen.noFileNeeded')}</span>
           </button>
         )}
       </div>
 
       <div style={{ display: 'flex', gap: '10px' }}>
-        {TABS.map((t) => (
-          <button key={t.key} style={tabStyle(filter === t.key)} onClick={() => setFilter(t.key)}>{t.label}</button>
+        {TABS.map((tab) => (
+          <button key={tab.key} style={tabStyle(filter === tab.key)} onClick={() => setFilter(tab.key)}>{tab.label}</button>
         ))}
       </div>
 
@@ -600,8 +610,8 @@ function FactuurLijst({ quarter, month, onBack, onBackToQuarter, onUpload, onMan
           color: '#888', fontSize: '13px', fontFamily: "'DM Sans', sans-serif",
         }}>
           {month.invoices.length === 0
-            ? 'Nog geen facturen voor deze maand. Upload er een hierboven.'
-            : 'Geen facturen in deze weergave.'}
+            ? t('facturen.noInvoicesForMonth')
+            : t('facturen.noInvoicesInView')}
         </div>
       )}
 
@@ -619,15 +629,15 @@ function FactuurLijst({ quarter, month, onBack, onBackToQuarter, onUpload, onMan
           display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap',
         }}>
           <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '13px', color: '#FAF3E3', marginRight: '4px' }}>
-            {selected.size} geselecteerd
+            {t('facturen.selectedCount', { n: selected.size })}
           </span>
           <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#888', flex: 1 }}>
-            Zet status op:
+            {t('facturen.setStatusTo')}
           </span>
           {[
-            { key: 'pending', label: 'Openstaand', bg: '#E8E0D0', color: '#020309' },
-            { key: 'paid',    label: 'Betaald',    bg: '#D2ECD0', color: '#2d7d32' },
-            { key: 'review',  label: 'Te controleren', bg: '#FDEEC4', color: '#92600A' },
+            { key: 'pending', label: t('common.status.pending'), bg: '#E8E0D0', color: '#020309' },
+            { key: 'paid',    label: t('common.status.paid'),    bg: '#D2ECD0', color: '#2d7d32' },
+            { key: 'review',  label: t('common.status.review'),  bg: '#FDEEC4', color: '#92600A' },
           ].map((s) => (
             <button
               key={s.key}
@@ -651,7 +661,7 @@ function FactuurLijst({ quarter, month, onBack, onBackToQuarter, onUpload, onMan
               fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: '12px', color: '#aaa',
             }}
           >
-            Deselecteren
+            {t('facturen.deselect')}
           </button>
         </div>
       )}
@@ -678,11 +688,11 @@ function FactuurLijst({ quarter, month, onBack, onBackToQuarter, onUpload, onMan
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '16px', marginBottom: '8px' }}>
-              Factuur verwijderen?
+              {t('facturen.deleteInvoiceConfirmTitle')}
             </div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#555', marginBottom: '22px', lineHeight: 1.55 }}>
               <strong>{confirmDelete.supplier}</strong> · {confirmDelete.nr} · {confirmDelete.date}
-              <br />Dit kan niet ongedaan gemaakt worden.
+              <br />{t('facturen.deleteInvoiceConfirmBody')}
             </div>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button
@@ -693,7 +703,7 @@ function FactuurLijst({ quarter, month, onBack, onBackToQuarter, onUpload, onMan
                   fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: '13px',
                 }}
               >
-                Annuleren
+                {t('common.cancel')}
               </button>
               <button
                 onClick={async () => {
@@ -708,7 +718,7 @@ function FactuurLijst({ quarter, month, onBack, onBackToQuarter, onUpload, onMan
                 }}
               >
                 <Trash2 size={14} />
-                Verwijderen
+                {t('common.delete')}
               </button>
             </div>
           </div>

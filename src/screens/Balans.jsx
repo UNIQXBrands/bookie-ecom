@@ -41,6 +41,7 @@ function SectionLabel({ children }) {
 }
 
 function BalansRow({ label, value, auto = false, editable = false, onChange }) {
+  const { t } = useApp();
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -49,7 +50,7 @@ function BalansRow({ label, value, auto = false, editable = false, onChange }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#020309' }}>{label}</span>
         {auto && (
-          <span title="Automatisch berekend uit je facturen" style={{
+          <span title={t('balans.autoCalcTooltip')} style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             width: '16px', height: '16px', borderRadius: '50%',
             background: '#E5F5F9', border: '1.5px solid #020309', cursor: 'help',
@@ -90,7 +91,7 @@ function TotaalRow({ label, value }) {
   );
 }
 
-function BalansKaart({ title, children, totaal, totaalLabel = 'Totaal' }) {
+function BalansKaart({ title, children, totaal, totaalLabel }) {
   return (
     <div style={{
       flex: 1, background: '#FFFFFF',
@@ -110,7 +111,7 @@ function BalansKaart({ title, children, totaal, totaalLabel = 'Totaal' }) {
 // ─── main screen ─────────────────────────────────────────────────────────────
 
 export function Balans() {
-  const { userQuarters } = useApp();
+  const { userQuarters, t } = useApp();
   const activeQuarters = userQuarters;
 
   const periods = [...activeQuarters].sort((a, b) => b.year - a.year || b.q - a.q);
@@ -161,7 +162,7 @@ export function Balans() {
   const inBalans = Math.abs(verschil) < 0.01;
 
   const balansData = {
-    period:              period?.label ?? 'Onbekend',
+    period:              period?.label ?? t('balans.unknown'),
     bank:                manual.bank,
     debiteuren:          fmt(autoValues.debiteuren),
     voorraad:            manual.voorraad,
@@ -193,11 +194,11 @@ export function Balans() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', color: '#888' }}>
-              Peildatum — einde kwartaal
+              {t('balans.reportingDate')}
             </div>
             <button
               onClick={() => setChatOpen((v) => !v)}
-              title={chatOpen ? 'Chat verbergen' : 'Chat tonen'}
+              title={chatOpen ? t('balans.hideChat') : t('balans.showChat')}
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
                 background: chatOpen ? '#020309' : '#FFFFFF',
@@ -210,7 +211,7 @@ export function Balans() {
               }}
             >
               {chatOpen ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
-              {chatOpen ? 'Chat verbergen' : 'Chat tonen'}
+              {chatOpen ? t('balans.hideChat') : t('balans.showChat')}
             </button>
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -229,7 +230,7 @@ export function Balans() {
         }}>
           <Info size={15} />
           <span>
-            Velden met <strong>A</strong> zijn automatisch berekend uit factuurdata voor <strong>{period?.label}</strong>. Overige velden kun je handmatig aanpassen.
+            {t('balans.autoCalcInfo1')} <strong>A</strong> {t('balans.autoCalcInfo2')} <strong>{period?.label}</strong>{t('balans.autoCalcInfo3')}
           </span>
         </div>
 
@@ -237,36 +238,36 @@ export function Balans() {
         <div style={{ display: 'flex', gap: '16px', alignItems: 'stretch' }}>
 
           {/* ACTIVA */}
-          <BalansKaart title="Activa" totaalLabel="Totaal activa" totaal={fmt(totaalActiva)}>
-            <SectionLabel>Vlottende activa</SectionLabel>
-            <BalansRow label="Bank / kas" value={manual.bank}     editable onChange={set('bank')} />
-            <BalansRow label="Debiteuren" value={fmt(autoValues.debiteuren)} auto />
-            <BalansRow label="Voorraad"   value={manual.voorraad} editable onChange={set('voorraad')} />
+          <BalansKaart title={t('balans.assets')} totaalLabel={t('balans.totalAssets')} totaal={fmt(totaalActiva)}>
+            <SectionLabel>{t('balans.currentAssets')}</SectionLabel>
+            <BalansRow label={t('balans.bankCash')} value={manual.bank}     editable onChange={set('bank')} />
+            <BalansRow label={t('balans.receivables')} value={fmt(autoValues.debiteuren)} auto />
+            <BalansRow label={t('balans.inventory')}   value={manual.voorraad} editable onChange={set('voorraad')} />
             <div style={{ marginTop: '4px', marginBottom: '4px', display: 'flex', justifyContent: 'flex-end' }}>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#888' }}>subtotaal {fmt(vlottend)}</span>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#888' }}>{t('balans.subtotal', { amount: fmt(vlottend) })}</span>
             </div>
-            <SectionLabel>Vaste activa</SectionLabel>
-            <BalansRow label="Apparatuur" value={manual.apparatuur} editable onChange={set('apparatuur')} />
-            <BalansRow label="Software"   value={manual.software}   editable onChange={set('software')} />
+            <SectionLabel>{t('balans.fixedAssets')}</SectionLabel>
+            <BalansRow label={t('balans.equipment')} value={manual.apparatuur} editable onChange={set('apparatuur')} />
+            <BalansRow label={t('balans.software')}   value={manual.software}   editable onChange={set('software')} />
             <div style={{ marginTop: '4px', display: 'flex', justifyContent: 'flex-end' }}>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#888' }}>subtotaal {fmt(vast)}</span>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#888' }}>{t('balans.subtotal', { amount: fmt(vast) })}</span>
             </div>
           </BalansKaart>
 
           {/* PASSIVA */}
-          <BalansKaart title="Passiva" totaalLabel="Totaal passiva" totaal={fmt(totaalPassiva)}>
-            <SectionLabel>Eigen vermogen</SectionLabel>
-            <BalansRow label="Startkapitaal"   value={manual.startkapitaal} editable onChange={set('startkapitaal')} />
-            <BalansRow label="Winst / verlies" value={fmt(winst)} auto />
+          <BalansKaart title={t('balans.liabilities')} totaalLabel={t('balans.totalLiabilities')} totaal={fmt(totaalPassiva)}>
+            <SectionLabel>{t('balans.equity')}</SectionLabel>
+            <BalansRow label={t('balans.startingCapital')}   value={manual.startkapitaal} editable onChange={set('startkapitaal')} />
+            <BalansRow label={t('balans.profitLoss')} value={fmt(winst)} auto />
             <div style={{ marginTop: '4px', marginBottom: '4px', display: 'flex', justifyContent: 'flex-end' }}>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#888' }}>subtotaal {fmt(eigenVermogen)}</span>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#888' }}>{t('balans.subtotal', { amount: fmt(eigenVermogen) })}</span>
             </div>
-            <SectionLabel>Kortlopende schulden</SectionLabel>
-            <BalansRow label="Crediteuren"      value={manual.crediteuren}  editable onChange={set('crediteuren')} />
-            <BalansRow label="BTW te betalen"   value={fmt(autoValues.btwTeBetalen)} auto />
-            <BalansRow label="Overige schulden" value={manual.overigeSchuld} editable onChange={set('overigeSchuld')} />
+            <SectionLabel>{t('balans.currentLiabilities')}</SectionLabel>
+            <BalansRow label={t('balans.payables')}      value={manual.crediteuren}  editable onChange={set('crediteuren')} />
+            <BalansRow label={t('balans.vatToPay')}   value={fmt(autoValues.btwTeBetalen)} auto />
+            <BalansRow label={t('balans.otherLiabilities')} value={manual.overigeSchuld} editable onChange={set('overigeSchuld')} />
             <div style={{ marginTop: '4px', display: 'flex', justifyContent: 'flex-end' }}>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#888' }}>subtotaal {fmt(kortlopend)}</span>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#888' }}>{t('balans.subtotal', { amount: fmt(kortlopend) })}</span>
             </div>
           </BalansKaart>
         </div>
@@ -283,18 +284,18 @@ export function Balans() {
             {inBalans ? <CheckCircle size={20} /> : <AlertTriangle size={20} />}
             <div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '14px' }}>
-                {inBalans ? 'Balans klopt' : 'Balans klopt niet'}
+                {inBalans ? t('balans.balanceOk') : t('balans.balanceNotOk')}
               </div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#444', marginTop: '1px' }}>
                 {inBalans
-                  ? `Activa en passiva zijn gelijk voor ${period?.label}.`
-                  : `Verschil van ${fmt(Math.abs(verschil))} — controleer de handmatige velden.`
+                  ? t('balans.balanceOkDesc', { period: period?.label })
+                  : t('balans.balanceDiffDesc', { amount: fmt(Math.abs(verschil)) })
                 }
               </div>
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#444' }}>Verschil</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#444' }}>{t('balans.difference')}</div>
             <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: '20px' }}>
               {inBalans ? '€0,00' : fmt(verschil)}
             </div>

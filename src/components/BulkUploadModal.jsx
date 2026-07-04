@@ -31,13 +31,13 @@ function normalizeDate(raw) {
   return `${parts[0].padStart(2,'0')}-${parts[1].padStart(2,'0')}-${parts[2]}`;
 }
 
-function buildInvoice(scanned, file) {
+function buildInvoice(scanned, file, t) {
   const exclNum = parseFloat(scanned.amount_excl) || 0;
   const btwNum  = parseFloat(scanned.btw_amount)  || 0;
   const inclNum = parseFloat(scanned.amount_incl) || (exclNum + btwNum);
   return {
     id:         uid(),
-    supplier:   scanned.supplier   || 'Onbekend',
+    supplier:   scanned.supplier   || t('lev.unknownSupplier'),
     nr:         scanned.invoice_nr || '-',
     date:       normalizeDate(scanned.date),
     rate:       Number(scanned.btw_rate) || 0,
@@ -56,14 +56,15 @@ function buildInvoice(scanned, file) {
 // ─── row ──────────────────────────────────────────────────────────────────────
 
 function QueueRow({ item }) {
+  const { t } = useApp();
   const { file, status, invoice, error } = item;
 
   const cfg = {
-    waiting:  { color: '#888',    bg: '#F0EAD8', label: 'Wachten' },
-    scanning: { color: '#92600A', bg: '#FDEEC4', label: 'Scannen…' },
-    done:     { color: '#2d7d32', bg: '#D2ECD0', label: 'Opgeslagen' },
-    skipped:  { color: '#555',    bg: '#E8E0D0', label: 'Al aanwezig' },
-    error:    { color: '#c0392b', bg: '#fdecea', label: 'Mislukt' },
+    waiting:  { color: '#888',    bg: '#F0EAD8', label: t('bulk.status.waiting') },
+    scanning: { color: '#92600A', bg: '#FDEEC4', label: t('bulk.status.scanning') },
+    done:     { color: '#2d7d32', bg: '#D2ECD0', label: t('bulk.status.done') },
+    skipped:  { color: '#555',    bg: '#E8E0D0', label: t('bulk.status.skipped') },
+    error:    { color: '#c0392b', bg: '#fdecea', label: t('bulk.status.error') },
   }[status] ?? { color: '#888', bg: '#F0EAD8', label: status };
 
   return (
@@ -101,7 +102,7 @@ function QueueRow({ item }) {
         </div>
         {invoice && (
           <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#888', marginTop: '2px' }}>
-            {invoice.date} · excl. {invoice.excl} · BTW {invoice.rate}%
+            {invoice.date} · {t('dashboard.exclAmount', { amount: invoice.excl })} · {t('shell.vatRate', { rate: invoice.rate })}
           </div>
         )}
         {(status === 'waiting' || status === 'scanning') && !invoice && (
@@ -127,7 +128,7 @@ function QueueRow({ item }) {
 // ─── modal ────────────────────────────────────────────────────────────────────
 
 export function BulkUploadModal({ files, onClose }) {
-  const { apiKey, addInvoice, userInvoices } = useApp();
+  const { apiKey, addInvoice, userInvoices, t } = useApp();
   const existingFileNames = useMemo(
     () => new Set(userInvoices.map((inv) => inv.fileName).filter(Boolean)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -169,7 +170,7 @@ export function BulkUploadModal({ files, onClose }) {
         try {
           const dataUrl = await readAsDataUrl(file);
           const scanned = await scanInvoice(file, apiKey);
-          const invoice = buildInvoice(scanned, file);
+          const invoice = buildInvoice(scanned, file, t);
           await addInvoice(invoice, dataUrl);
           setQueue((q) => q.map((item, idx) => idx === i ? { ...item, status: 'done', invoice } : item));
           break;
@@ -180,7 +181,7 @@ export function BulkUploadModal({ files, onClose }) {
           if (isRateLimit && attempts < 3) {
             // Wait 20s and retry
             setQueue((q) => q.map((item, idx) => idx === i
-              ? { ...item, status: 'scanning', error: `Rate limit — wacht 20s (poging ${attempts}/3)…` }
+              ? { ...item, status: 'scanning', error: t('bulk.rateLimitWait', { attempt: attempts }) }
               : item
             ));
             await new Promise((r) => setTimeout(r, 20000));
@@ -236,14 +237,14 @@ export function BulkUploadModal({ files, onClose }) {
             </span>
             <div>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '14px', color: '#FAF3E3' }}>
-                Bulk upload
+                {t('bulk.title')}
               </div>
               <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#888' }}>
                 {running
-                  ? `${progress} / ${fileList.length} verwerkt`
+                  ? t('bulk.progressProcessed', { done: progress, total: fileList.length })
                   : allDone
-                  ? `${doneCount} opgeslagen${errorCount > 0 ? ` · ${errorCount} mislukt` : ''}`
-                  : `${fileList.length} bestanden geselecteerd`}
+                  ? t('bulk.savedWithErrors', { done: doneCount, errors: errorCount > 0 ? t('bulk.andFailed', { n: errorCount }) : '' })
+                  : t('bulk.filesSelected', { n: fileList.length })}
               </div>
             </div>
           </div>
@@ -271,7 +272,7 @@ export function BulkUploadModal({ files, onClose }) {
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {!apiKey ? (
             <div style={{ padding: '32px', textAlign: 'center', fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#888' }}>
-              Stel eerst een Anthropic API-sleutel in via Instellingen.
+              {t('bulk.setApiKeyFirst')}
             </div>
           ) : (
             queue.map((item, idx) => <QueueRow key={idx} item={item} />)
@@ -284,10 +285,10 @@ export function BulkUploadModal({ files, onClose }) {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: '10px',
         }}>
           <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#888', flex: 1 }}>
-            {running ? 'Bookie AI verwerkt je facturen…' : allDone ? [
-              doneCount    > 0 && `${doneCount} opgeslagen`,
-              skippedCount > 0 && `${skippedCount} al aanwezig`,
-              errorCount   > 0 && `${errorCount} mislukt`,
+            {running ? t('bulk.processing') : allDone ? [
+              doneCount    > 0 && t('bulk.doneSaved', { n: doneCount }),
+              skippedCount > 0 && t('bulk.alreadyPresent', { n: skippedCount }),
+              errorCount   > 0 && t('bulk.failed', { n: errorCount }),
             ].filter(Boolean).join(' · ') : ''}
           </span>
           {allDone && errorCount > 0 && (
@@ -307,7 +308,7 @@ export function BulkUploadModal({ files, onClose }) {
                 cursor: 'pointer',
               }}
             >
-              Mislukte opnieuw
+              {t('bulk.retryFailed')}
             </button>
           )}
           <button
@@ -323,7 +324,7 @@ export function BulkUploadModal({ files, onClose }) {
               cursor: running ? 'not-allowed' : 'pointer',
             }}
           >
-            {running ? 'Bezig…' : 'Sluiten'}
+            {running ? t('bulk.busy') : t('common.close')}
           </button>
         </div>
       </div>

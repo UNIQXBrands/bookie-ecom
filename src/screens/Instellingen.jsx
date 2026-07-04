@@ -43,63 +43,65 @@ function Divider() {
 
 // ─── integrations data ───────────────────────────────────────────────────────
 
-const INTEGRATIONS = [
-  {
-    category: 'E-mail',
-    items: [
-      { key: 'gmail',   name: 'Gmail',   desc: 'Facturen automatisch uit inbox halen', icon: <Mail size={18} />,     color: '#F3C1C0', connected: false },
-      { key: 'outlook', name: 'Outlook', desc: 'Microsoft 365 mailbox koppelen',        icon: <Mail size={18} />,     color: '#E5F5F9', connected: false },
-    ],
-  },
-  {
-    category: 'Opslag',
-    items: [
-      { key: 'gdrive',  name: 'Google Drive', desc: 'Facturen automatisch opslaan',    icon: <HardDrive size={18} />, color: '#E5F5F9', connected: false },
-      { key: 'dropbox', name: 'Dropbox',      desc: 'Back-up van al je facturen',       icon: <HardDrive size={18} />, color: '#E5F5F9', connected: false },
-    ],
-  },
-  {
-    category: 'Webshop',
-    items: [
-      { key: 'shopify',    name: 'Shopify',    desc: 'Orders en facturen synchroniseren', icon: <ShoppingBag size={18} />, color: '#D2ECD0', connected: true },
-      { key: 'woocommerce',name: 'WooCommerce',desc: 'WordPress webshop koppelen',        icon: <ShoppingBag size={18} />, color: '#D2ECD0', connected: false },
-      { key: 'bol',        name: 'Bol.com',    desc: 'Verkopen importeren uit Bol',       icon: <ShoppingBag size={18} />, color: '#FDEEC4', connected: true },
-    ],
-  },
-  {
-    category: 'Advertenties',
-    items: [
-      { key: 'googleads', name: 'Google Ads', desc: 'Ad-uitgaven automatisch importeren', icon: <BarChart2 size={18} />, color: '#E5F5F9', connected: false },
-      { key: 'metaads',   name: 'Meta Ads',   desc: 'Facebook & Instagram advertenties',  icon: <Monitor size={18} />,   color: '#E5F5F9', connected: false },
-      { key: 'tiktokads', name: 'TikTok Ads', desc: 'TikTok campagne-uitgaven',           icon: <BarChart2 size={18} />, color: '#F3C1C0', connected: false },
-    ],
-  },
-  {
-    category: 'Betalen',
-    items: [
-      { key: 'mollie', name: 'Mollie', desc: 'Betalingsoverzichten importeren',    icon: <CreditCard size={18} />, color: '#D2ECD0', connected: false },
-      { key: 'stripe', name: 'Stripe', desc: 'Stripe payouts en facturen linken',  icon: <CreditCard size={18} />, color: '#E5F5F9', connected: false },
-    ],
-  },
-  {
-    category: 'Boekhouding',
-    items: [
-      { key: 'moneybird', name: 'Moneybird',   desc: 'Facturen tweezijdig synchroniseren', icon: <BookOpen size={18} />, color: '#FDEEC4', connected: false },
-      { key: 'exact',     name: 'Exact Online',desc: 'Exporteer naar Exact Online',         icon: <BookOpen size={18} />, color: '#E5F5F9', connected: false },
-    ],
-  },
-  {
-    category: 'Logistiek',
-    items: [
-      { key: 'postnl', name: 'PostNL', desc: 'Verzendkosten automatisch importeren', icon: <Truck size={18} />, color: '#FDEEC4', connected: false },
-      { key: 'dhl',    name: 'DHL',    desc: 'DHL verzendoverzicht koppelen',        icon: <Truck size={18} />, color: '#F3C1C0', connected: false },
-    ],
-  },
-];
+function getIntegrations(t) {
+  return [
+    {
+      category: t('settings.integrations.email'),
+      items: [
+        { key: 'gmail',   name: 'Gmail',   desc: t('settings.integrations.gmailDesc'),   icon: <Mail size={18} />,     color: '#F3C1C0', connected: false },
+        { key: 'outlook', name: 'Outlook', desc: t('settings.integrations.outlookDesc'), icon: <Mail size={18} />,     color: '#E5F5F9', connected: false },
+      ],
+    },
+    {
+      category: t('settings.integrations.storage'),
+      items: [
+        { key: 'gdrive',  name: 'Google Drive', desc: t('settings.integrations.gdriveDesc'),  icon: <HardDrive size={18} />, color: '#E5F5F9', connected: false },
+        { key: 'dropbox', name: 'Dropbox',      desc: t('settings.integrations.dropboxDesc'), icon: <HardDrive size={18} />, color: '#E5F5F9', connected: false },
+      ],
+    },
+    {
+      category: t('settings.integrations.webshop'),
+      items: [
+        { key: 'shopify',    name: 'Shopify',    desc: t('settings.integrations.shopifyDesc'),     icon: <ShoppingBag size={18} />, color: '#D2ECD0', connected: true },
+        { key: 'woocommerce',name: 'WooCommerce',desc: t('settings.integrations.woocommerceDesc'), icon: <ShoppingBag size={18} />, color: '#D2ECD0', connected: false },
+        { key: 'bol',        name: 'Bol.com',    desc: t('settings.integrations.bolDesc'),         icon: <ShoppingBag size={18} />, color: '#FDEEC4', connected: true },
+      ],
+    },
+    {
+      category: t('settings.integrations.ads'),
+      items: [
+        { key: 'googleads', name: 'Google Ads', desc: t('settings.integrations.googleadsDesc'), icon: <BarChart2 size={18} />, color: '#E5F5F9', connected: false },
+        { key: 'metaads',   name: 'Meta Ads',   desc: t('settings.integrations.metaadsDesc'),   icon: <Monitor size={18} />,   color: '#E5F5F9', connected: false },
+        { key: 'tiktokads', name: 'TikTok Ads', desc: t('settings.integrations.tiktokadsDesc'), icon: <BarChart2 size={18} />, color: '#F3C1C0', connected: false },
+      ],
+    },
+    {
+      category: t('settings.integrations.payments'),
+      items: [
+        { key: 'mollie', name: 'Mollie', desc: t('settings.integrations.mollieDesc'), icon: <CreditCard size={18} />, color: '#D2ECD0', connected: false },
+        { key: 'stripe', name: 'Stripe', desc: t('settings.integrations.stripeDesc'), icon: <CreditCard size={18} />, color: '#E5F5F9', connected: false },
+      ],
+    },
+    {
+      category: t('settings.integrations.accounting'),
+      items: [
+        { key: 'moneybird', name: 'Moneybird',   desc: t('settings.integrations.moneybirdDesc'), icon: <BookOpen size={18} />, color: '#FDEEC4', connected: false },
+        { key: 'exact',     name: 'Exact Online',desc: t('settings.integrations.exactDesc'),     icon: <BookOpen size={18} />, color: '#E5F5F9', connected: false },
+      ],
+    },
+    {
+      category: t('settings.integrations.logistics'),
+      items: [
+        { key: 'postnl', name: 'PostNL', desc: t('settings.integrations.postnlDesc'), icon: <Truck size={18} />, color: '#FDEEC4', connected: false },
+        { key: 'dhl',    name: 'DHL',    desc: t('settings.integrations.dhlDesc'),    icon: <Truck size={18} />, color: '#F3C1C0', connected: false },
+      ],
+    },
+  ];
+}
 
 // ─── sub-components ──────────────────────────────────────────────────────────
 
-function IntegrationCard({ item, onToggle }) {
+function IntegrationCard({ item, onToggle, t }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -117,13 +119,13 @@ function IntegrationCard({ item, onToggle }) {
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-        {item.connected && <Badge variant="paid" dot>Verbonden</Badge>}
+        {item.connected && <Badge variant="paid" dot>{t('settings.connected')}</Badge>}
         <Button
           variant={item.connected ? 'warn' : 'default'}
           size="sm"
           onClick={() => onToggle(item.key)}
         >
-          {item.connected ? 'Verbreken' : 'Koppelen'}
+          {item.connected ? t('settings.disconnect') : t('settings.connect')}
         </Button>
       </div>
     </div>
@@ -150,8 +152,8 @@ function LangButton({ label, active, onClick }) {
 // ─── main screen ─────────────────────────────────────────────────────────────
 
 export function Instellingen() {
-  const { apiKey, setApiKey, companyProfile, setCompanyProfile } = useApp();
-  const [lang, setLang]           = useState('nl');
+  const { apiKey, setApiKey, companyProfile, setCompanyProfile, language, setLanguage, t } = useApp();
+  const INTEGRATIONS = getIntegrations(t);
   const [connections, setConnections] = useState(() => {
     const map = {};
     INTEGRATIONS.forEach((g) => g.items.forEach((i) => { map[i.key] = i.connected; }));
@@ -199,7 +201,7 @@ export function Instellingen() {
     <div style={{ padding: '24px', maxWidth: '720px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
 
       {/* ── Bookie AI ── */}
-      <Section title="Bookie AI">
+      <Section title={t('settings.bookieAi')}>
         <SettingCard>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
@@ -212,14 +214,14 @@ export function Instellingen() {
               </span>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '14px', fontFamily: "'DM Sans', sans-serif" }}>
-                  Anthropic API-sleutel
+                  {t('settings.anthropicKey')}
                 </div>
                 <div style={{ fontSize: '12px', color: '#888', fontFamily: "'DM Sans', sans-serif", marginTop: '2px', lineHeight: 1.5 }}>
-                  Gebruikt voor het automatisch scannen en uitlezen van facturen. Haal je sleutel op via console.anthropic.com.
+                  {t('settings.anthropicKeyDesc')}
                 </div>
               </div>
               {apiKey && (
-                <Badge variant="paid" dot style={{ flexShrink: 0 }}>Actief</Badge>
+                <Badge variant="paid" dot style={{ flexShrink: 0 }}>{t('settings.active')}</Badge>
               )}
             </div>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
@@ -253,7 +255,7 @@ export function Instellingen() {
                 variant={keySaved ? 'accent' : 'primary'}
                 onClick={handleSaveKey}
               >
-                {keySaved ? '✓ Opgeslagen' : 'Opslaan'}
+                {keySaved ? t('common.saved') : t('common.save')}
               </Button>
             </div>
           </div>
@@ -261,33 +263,33 @@ export function Instellingen() {
       </Section>
 
       {/* ── Profiel ── */}
-      <Section title="Profiel & bedrijf">
+      <Section title={t('settings.profileCompany')}>
         <SettingCard>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <Input label="Bedrijfsnaam" value={profile.bedrijfsnaam}
+              <Input label={t('settings.companyName')} value={profile.bedrijfsnaam}
                 onChange={(e) => setProfile((p) => ({ ...p, bedrijfsnaam: e.target.value }))} />
-              <Input label="E-mailadres" type="email" value={profile.email}
+              <Input label={t('settings.email')} type="email" value={profile.email}
                 onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <Input label="KVK-nummer" mono value={profile.kvk}
+              <Input label={t('settings.kvk')} mono value={profile.kvk}
                 onChange={(e) => setProfile((p) => ({ ...p, kvk: e.target.value }))} />
-              <Input label="BTW-nummer" mono value={profile.btwnummer}
+              <Input label={t('settings.vatNumber')} mono value={profile.btwnummer}
                 onChange={(e) => setProfile((p) => ({ ...p, btwnummer: e.target.value }))} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <Input label="Adres (straat + stad)" value={profile.address} placeholder="Hoofdstraat 1, 1234 AB Amsterdam"
+              <Input label={t('settings.address')} value={profile.address} placeholder="Hoofdstraat 1, 1234 AB Amsterdam"
                 onChange={(e) => setProfile((p) => ({ ...p, address: e.target.value }))} />
-              <Input label="IBAN" mono value={profile.iban} placeholder="NL00 BANK 0000 0000 00"
+              <Input label={t('settings.iban')} mono value={profile.iban} placeholder="NL00 BANK 0000 0000 00"
                 onChange={(e) => setProfile((p) => ({ ...p, iban: e.target.value }))} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: '16px', alignItems: 'end' }}>
-              <Input label="Betaaltermijn (dagen)" mono value={profile.paymentDays} placeholder="14"
+              <Input label={t('settings.paymentDays')} mono value={profile.paymentDays} placeholder="14"
                 onChange={(e) => setProfile((p) => ({ ...p, paymentDays: e.target.value }))} />
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <Button variant={profileSaved ? 'accent' : 'primary'} onClick={saveProfile}>
-                  {profileSaved ? '✓ Opgeslagen' : 'Opslaan'}
+                  {profileSaved ? t('common.saved') : t('common.save')}
                 </Button>
               </div>
             </div>
@@ -296,23 +298,23 @@ export function Instellingen() {
       </Section>
 
       {/* ── Taal ── */}
-      <Section title="Taal">
+      <Section title={t('settings.language')}>
         <SettingCard>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontWeight: 700, fontSize: '14px', fontFamily: "'DM Sans', sans-serif" }}>Taal van de interface</div>
-              <div style={{ fontSize: '12px', color: '#888', fontFamily: "'DM Sans', sans-serif", marginTop: '2px' }}>Van toepassing op alle schermen en notificaties.</div>
+              <div style={{ fontWeight: 700, fontSize: '14px', fontFamily: "'DM Sans', sans-serif" }}>{t('settings.languageOfInterface')}</div>
+              <div style={{ fontSize: '12px', color: '#888', fontFamily: "'DM Sans', sans-serif", marginTop: '2px' }}>{t('settings.languageDesc')}</div>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <LangButton label="🇳🇱 Nederlands" active={lang === 'nl'} onClick={() => setLang('nl')} />
-              <LangButton label="🇬🇧 English"    active={lang === 'en'} onClick={() => setLang('en')} />
+              <LangButton label="🇳🇱 Nederlands" active={language === 'nl'} onClick={() => setLanguage('nl')} />
+              <LangButton label="🇬🇧 English"    active={language === 'en'} onClick={() => setLanguage('en')} />
             </div>
           </div>
         </SettingCard>
       </Section>
 
       {/* ── Koppelingen ── */}
-      <Section title={`Koppelingen · ${connectedCount} actief`}>
+      <Section title={t('settings.integrations', { n: connectedCount })}>
         {INTEGRATIONS.map((group) => {
           const groupItems = group.items.map((i) => ({ ...i, connected: connections[i.key] }));
           return (
@@ -323,7 +325,7 @@ export function Instellingen() {
               {groupItems.map((item, idx) => (
                 <div key={item.key}>
                   {idx > 0 && <Divider />}
-                  <IntegrationCard item={item} onToggle={toggleConn} />
+                  <IntegrationCard item={item} onToggle={toggleConn} t={t} />
                 </div>
               ))}
             </SettingCard>
@@ -332,12 +334,12 @@ export function Instellingen() {
       </Section>
 
       {/* ── Notificaties ── */}
-      <Section title="Notificaties">
+      <Section title={t('settings.notifications')}>
         <SettingCard>
           {[
-            { key: 'btw_deadline',   label: 'BTW-deadline herinnering', desc: '7 dagen vóór het einde van het kwartaal.' },
-            { key: 'nieuwe_factuur', label: 'Nieuwe factuur gevonden',  desc: 'Zodra Bookie een factuur detecteert in je inbox.' },
-            { key: 'maandrapport',   label: 'Maandelijks rapport',      desc: 'Overzicht van je BTW en facturen per maand.' },
+            { key: 'btw_deadline',   label: t('settings.notif.vatDeadline'),   desc: t('settings.notif.vatDeadlineDesc') },
+            { key: 'nieuwe_factuur', label: t('settings.notif.newInvoice'),     desc: t('settings.notif.newInvoiceDesc') },
+            { key: 'maandrapport',   label: t('settings.notif.monthlyReport'), desc: t('settings.notif.monthlyReportDesc') },
           ].map((n, idx, arr) => (
             <div key={n.key}>
               {idx > 0 && <Divider />}
@@ -370,23 +372,23 @@ export function Instellingen() {
       </Section>
 
       {/* ── Gevaar-zone ── */}
-      <Section title="Account">
+      <Section title={t('settings.account')}>
         <SettingCard variant="red">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: '14px', fontFamily: "'DM Sans', sans-serif" }}>Alle data exporteren</div>
-                <div style={{ fontSize: '12px', color: '#444', fontFamily: "'DM Sans', sans-serif", marginTop: '2px' }}>Download al je facturen en BTW-data als CSV.</div>
+                <div style={{ fontWeight: 700, fontSize: '14px', fontFamily: "'DM Sans', sans-serif" }}>{t('settings.exportAllData')}</div>
+                <div style={{ fontSize: '12px', color: '#444', fontFamily: "'DM Sans', sans-serif", marginTop: '2px' }}>{t('settings.exportAllDataDesc')}</div>
               </div>
-              <Button variant="default" icon={<Download size={15} />} size="sm">Exporteren</Button>
+              <Button variant="default" icon={<Download size={15} />} size="sm">{t('common.export')}</Button>
             </div>
             <Divider />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: '14px', fontFamily: "'DM Sans', sans-serif" }}>Account verwijderen</div>
-                <div style={{ fontSize: '12px', color: '#444', fontFamily: "'DM Sans', sans-serif", marginTop: '2px' }}>Verwijdert al je data permanent. Dit is niet terug te draaien.</div>
+                <div style={{ fontWeight: 700, fontSize: '14px', fontFamily: "'DM Sans', sans-serif" }}>{t('settings.deleteAccount')}</div>
+                <div style={{ fontSize: '12px', color: '#444', fontFamily: "'DM Sans', sans-serif", marginTop: '2px' }}>{t('settings.deleteAccountDesc')}</div>
               </div>
-              <Button variant="warn" icon={<Trash2 size={15} />} size="sm">Verwijderen</Button>
+              <Button variant="warn" icon={<Trash2 size={15} />} size="sm">{t('common.delete')}</Button>
             </div>
           </div>
         </SettingCard>

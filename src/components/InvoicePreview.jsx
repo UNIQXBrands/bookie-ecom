@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { X, Download, FileText, ZoomIn, ZoomOut } from 'lucide-react';
 import { getFileUrl } from '../lib/db';
+import { useApp } from '../context/AppContext';
 
 export function InvoicePreview({ invoice, onClose }) {
+  const { t } = useApp();
   const [fileData, setFileData] = useState(null);
   const [zoom, setZoom]         = useState(1);
 
@@ -85,25 +87,25 @@ export function InvoicePreview({ invoice, onClose }) {
             {/* zoom controls — only for images */}
             {isImg && hasFile && (
               <>
-                <IconBtn onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))} title="Uitzoomen">
+                <IconBtn onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))} title={t('preview.zoomOut')}>
                   <ZoomOut size={16} />
                 </IconBtn>
                 <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#888', minWidth: '36px', textAlign: 'center' }}>
                   {Math.round(zoom * 100)}%
                 </span>
-                <IconBtn onClick={() => setZoom((z) => Math.min(3, z + 0.25))} title="Inzoomen">
+                <IconBtn onClick={() => setZoom((z) => Math.min(3, z + 0.25))} title={t('preview.zoomIn')}>
                   <ZoomIn size={16} />
                 </IconBtn>
               </>
             )}
 
             {hasFile && (
-              <IconBtn onClick={handleDownload} title="Downloaden">
+              <IconBtn onClick={handleDownload} title={t('preview.download')}>
                 <Download size={16} />
               </IconBtn>
             )}
 
-            <IconBtn onClick={onClose} title="Sluiten">
+            <IconBtn onClick={onClose} title={t('preview.close')}>
               <X size={18} />
             </IconBtn>
           </div>
@@ -116,14 +118,14 @@ export function InvoicePreview({ invoice, onClose }) {
           ) : isPdf ? (
             <iframe
               src={fileData}
-              title={invoice.fileName || 'Factuur'}
+              title={invoice.fileName || t('preview.invoiceFallback')}
               style={{ width: '100%', height: '100%', minHeight: '520px', border: 'none', display: 'block' }}
             />
           ) : isImg ? (
             <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px' }}>
               <img
                 src={fileData}
-                alt={invoice.fileName || 'Factuur'}
+                alt={invoice.fileName || t('preview.invoiceFallback')}
                 style={{
                   maxWidth: '100%',
                   transform: `scale(${zoom})`,
@@ -149,9 +151,9 @@ export function InvoicePreview({ invoice, onClose }) {
           flexShrink: 0,
         }}>
           <div style={{ display: 'flex', gap: '16px' }}>
-            <FooterStat label="Excl. BTW" value={invoice.excl} />
-            <FooterStat label="BTW" value={invoice.rate != null ? `${invoice.rate}%` : '—'} />
-            <FooterStat label="Totaal" value={invoice.amount} bold />
+            <FooterStat label={t('preview.exclVat')} value={invoice.excl} />
+            <FooterStat label={t('preview.vat')} value={invoice.rate != null ? `${invoice.rate}%` : '—'} />
+            <FooterStat label={t('preview.total')} value={invoice.amount} bold />
           </div>
           {hasFile && (
             <button
@@ -166,7 +168,7 @@ export function InvoicePreview({ invoice, onClose }) {
               }}
             >
               <Download size={13} />
-              Downloaden
+              {t('preview.download')}
             </button>
           )}
         </div>
@@ -208,6 +210,7 @@ function FooterStat({ label, value, bold }) {
 }
 
 function NoFileState({ invoice }) {
+  const { t } = useApp();
   return (
     <div style={{ padding: '48px 24px', textAlign: 'center', width: '100%' }}>
       <div style={{
@@ -218,12 +221,12 @@ function NoFileState({ invoice }) {
         <FileText size={24} color="#888" />
       </div>
       <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '15px', marginBottom: '6px', color: '#020309' }}>
-        Geen bestand beschikbaar
+        {t('preview.noFileTitle')}
       </div>
       <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#888', lineHeight: 1.55 }}>
         {invoice.fileName
-          ? `${invoice.fileName} kon niet worden geladen.`
-          : 'Deze factuur is handmatig ingevoerd zonder bestand.'}
+          ? t('preview.noFileLoadFailed', { name: invoice.fileName })
+          : t('preview.noFileManual')}
       </div>
     </div>
   );

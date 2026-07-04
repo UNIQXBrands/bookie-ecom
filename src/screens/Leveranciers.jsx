@@ -34,12 +34,12 @@ function mode(arr) {
   return best;
 }
 
-function computeSuppliers(activeQuarters) {
+function computeSuppliers(activeQuarters, t) {
   const map = {};
   for (const q of activeQuarters) {
     for (const m of q.months) {
       for (const inv of m.invoices) {
-        const name = inv.supplier || 'Onbekend';
+        const name = inv.supplier || t('lev.unknownSupplier');
         if (!map[name]) {
           map[name] = { name, invoices: [], totalExcl: 0, totalBtw: 0, rates: [], lastTs: 0, lastDate: '-' };
         }
@@ -68,6 +68,7 @@ function computeSuppliers(activeQuarters) {
 // ─── supplier card ────────────────────────────────────────────────────────────
 
 function SupplierCard({ supplier: s }) {
+  const { t } = useApp();
   const initials = s.name.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase()).join('');
 
   return (
@@ -106,9 +107,9 @@ function SupplierCard({ supplier: s }) {
 
       {/* stats row */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        <StatRow icon={<TrendingUp size={13} />} label="Totaal excl. BTW" value={fmtEur(s.totalExcl)} mono />
-        <StatRow icon={<FileText size={13} />}    label="Facturen"         value={String(s.invoices.length)} />
-        <StatRow icon={<Calendar size={13} />}    label="Laatste factuur"  value={s.lastDate} mono />
+        <StatRow icon={<TrendingUp size={13} />} label={t('lev.totalExclVat')} value={fmtEur(s.totalExcl)} mono />
+        <StatRow icon={<FileText size={13} />}    label={t('lev.invoices')}         value={String(s.invoices.length)} />
+        <StatRow icon={<Calendar size={13} />}    label={t('lev.lastInvoice')}  value={s.lastDate} mono />
       </div>
 
       {/* btw subtotal */}
@@ -116,7 +117,7 @@ function SupplierCard({ supplier: s }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         paddingTop: '10px', borderTop: '1.5px solid #e8e0d0',
       }}>
-        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#888' }}>BTW totaal</span>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#888' }}>{t('lev.vatTotal')}</span>
         <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: '13px', color: '#020309' }}>
           {fmtEur(s.totalBtw)}
         </span>
@@ -143,6 +144,7 @@ function StatRow({ icon, label, value, mono }) {
 // ─── empty state ─────────────────────────────────────────────────────────────
 
 function EmptyState() {
+  const { t } = useApp();
   return (
     <div style={{
       padding: '56px 32px', textAlign: 'center',
@@ -157,10 +159,10 @@ function EmptyState() {
         <Package size={24} />
       </div>
       <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '15px', marginBottom: '6px' }}>
-        Nog geen leveranciers
+        {t('lev.emptyTitle')}
       </div>
       <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#888', lineHeight: 1.55 }}>
-        Leveranciers verschijnen hier automatisch zodra je facturen uploadt.
+        {t('lev.emptyDesc')}
       </div>
     </div>
   );
@@ -169,6 +171,7 @@ function EmptyState() {
 // ─── summary bar ─────────────────────────────────────────────────────────────
 
 function SummaryBar({ suppliers }) {
+  const { t } = useApp();
   const totaalExcl = suppliers.reduce((s, sup) => s + sup.totalExcl, 0);
   const totaalBtw  = suppliers.reduce((s, sup) => s + sup.totalBtw,  0);
   const totaalInv  = suppliers.reduce((s, sup) => s + sup.invoices.length, 0);
@@ -178,10 +181,10 @@ function SummaryBar({ suppliers }) {
       display: 'flex', gap: '12px', flexWrap: 'wrap',
     }}>
       {[
-        { label: 'Leveranciers',    value: String(suppliers.length), mono: false },
-        { label: 'Facturen totaal', value: String(totaalInv),        mono: false },
-        { label: 'Uitgaven excl.',  value: fmtEur(totaalExcl),       mono: true  },
-        { label: 'BTW totaal',      value: fmtEur(totaalBtw),        mono: true  },
+        { label: t('lev.suppliers'),      value: String(suppliers.length), mono: false },
+        { label: t('lev.totalInvoices'),  value: String(totaalInv),        mono: false },
+        { label: t('lev.exclExpenses'),   value: fmtEur(totaalExcl),       mono: true  },
+        { label: t('lev.vatTotal'),       value: fmtEur(totaalBtw),        mono: true  },
       ].map(({ label, value, mono }) => (
         <div key={label} style={{
           flex: 1, minWidth: '140px',
@@ -204,10 +207,10 @@ function SummaryBar({ suppliers }) {
 // ─── main screen ─────────────────────────────────────────────────────────────
 
 export function Leveranciers() {
-  const { userQuarters } = useApp();
+  const { userQuarters, t } = useApp();
   const activeQuarters = userQuarters;
 
-  const suppliers = useMemo(() => computeSuppliers(activeQuarters), [activeQuarters]);
+  const suppliers = useMemo(() => computeSuppliers(activeQuarters, t), [activeQuarters, t]);
 
   return (
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '960px' }}>

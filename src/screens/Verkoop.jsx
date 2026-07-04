@@ -85,7 +85,7 @@ function buildFinalInvoice(form, totals, overrideStatus) {
 
 // ─── PDF (styled like the app) ────────────────────────────────────────────────
 
-function generatePdfHtml(inv) {
+function generatePdfHtml(inv, t) {
   const company = getCompanyInfo();
   const totals  = computeTotals(inv.lineItems);
 
@@ -103,7 +103,7 @@ function generatePdfHtml(inv) {
   const btwRows = Object.entries(totals.byRate)
     .filter(([, v]) => v > 0)
     .sort(([a], [b]) => Number(b) - Number(a))
-    .map(([rate, btw]) => `<div class="tot-row"><span class="lbl">BTW ${rate}%</span><span class="val mono">€ ${fmtNum(btw)}</span></div>`)
+    .map(([rate, btw]) => `<div class="tot-row"><span class="lbl">${t('shell.vatRate', { rate })}</span><span class="val mono">€ ${fmtNum(btw)}</span></div>`)
     .join('');
 
   const payDays = company.paymentDays || 14;
@@ -112,7 +112,7 @@ function generatePdfHtml(inv) {
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<title>Factuur ${inv.invoiceNr}</title>
+<title>${t('vk.mailSubject', { nr: inv.invoiceNr })}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -182,7 +182,7 @@ function generatePdfHtml(inv) {
 
   <div class="inv-header">
     <div>
-      <div class="co-name">${company.bedrijfsnaam || 'Jouw bedrijf'}</div>
+      <div class="co-name">${company.bedrijfsnaam || t('vk.yourCompany')}</div>
       <div class="co-sub">
         ${company.address  ? `${company.address}<br>` : ''}
         ${company.email    ? `${company.email}<br>`   : ''}
@@ -191,35 +191,35 @@ function generatePdfHtml(inv) {
       </div>
     </div>
     <div class="inv-meta-block">
-      <div class="inv-label-badge">FACTUUR</div>
+      <div class="inv-label-badge">${t('vk.invoiceTitle')}</div>
       <div class="inv-nr">${inv.invoiceNr}</div>
       <div class="inv-dates">
-        ${inv.date ? `Datum &nbsp; ${inv.date}` : ''}<br>
-        ${inv.dueDate ? `Vervalt &nbsp; ${inv.dueDate}` : ''}
+        ${inv.date ? `${t('vk.date')} &nbsp; ${inv.date}` : ''}<br>
+        ${inv.dueDate ? `${t('vk.dueDate')} &nbsp; ${inv.dueDate}` : ''}
       </div>
     </div>
   </div>
 
   <div class="to-section">
-    <div class="sec-lbl">Factuur aan</div>
+    <div class="sec-lbl">${t('vk.invoiceTo')}</div>
     <div class="to-name">${inv.customerName || '–'}</div>
     ${inv.customerAddress ? `<div class="to-sub">${inv.customerAddress.replace(/\n/g,'<br>')}</div>` : ''}
     ${inv.customerEmail   ? `<div class="to-sub">${inv.customerEmail}</div>` : ''}
   </div>
 
   <div class="lines-header">
-    <span>Omschrijving</span><span class="r">Aantal</span><span class="r">Prijs</span><span class="r">BTW</span><span class="r">Subtotaal</span>
+    <span>${t('vk.colDescription')}</span><span class="r">${t('vk.colQty')}</span><span class="r">${t('vk.colPrice')}</span><span class="r">${t('vk.colVat')}</span><span class="r">${t('vk.colSubtotal')}</span>
   </div>
   ${lineRows}
 
   <div class="totals-section">
-    <div class="tot-row"><span class="lbl">Subtotaal excl. BTW</span><span class="val mono">€ ${fmtNum(totals.totExcl)}</span></div>
+    <div class="tot-row"><span class="lbl">${t('vk.subtotalExclVat')}</span><span class="val mono">€ ${fmtNum(totals.totExcl)}</span></div>
     ${btwRows}
     <div class="tot-divider"></div>
-    <div class="tot-row tot-final"><span class="lbl">Totaal incl. BTW</span><span class="val mono">€ ${fmtNum(totals.totIncl)}</span></div>
+    <div class="tot-row tot-final"><span class="lbl">${t('vk.totalInclVat')}</span><span class="val mono">€ ${fmtNum(totals.totIncl)}</span></div>
   </div>
 
-  ${inv.notes ? `<div class="notes-section"><div class="sec-lbl">Notities</div><div class="notes-text">${inv.notes}</div></div>` : ''}
+  ${inv.notes ? `<div class="notes-section"><div class="sec-lbl">${t('vk.notes')}</div><div class="notes-text">${inv.notes}</div></div>` : ''}
 
   <div class="spacer"></div>
 
@@ -227,9 +227,9 @@ function generatePdfHtml(inv) {
   <div class="footer-section">
     <div class="footer-text">
       ${company.iban
-        ? `Graag <strong>€ ${fmtNum(totals.totIncl)}</strong> voldoen binnen <strong>${payDays} dagen</strong> op <strong>${company.iban}</strong> t.n.v. <strong>${company.bedrijfsnaam || ''}</strong>.`
-        : `Graag het factuurbedrag voldoen binnen <strong>${payDays} dagen</strong>.`}
-      ${company.email ? `<br>Vragen? <strong>${company.email}</strong>` : ''}
+        ? t('vk.payWithIban', { amount: `<strong>€ ${fmtNum(totals.totIncl)}</strong>`, days: `<strong>${payDays}</strong>`, iban: `<strong>${company.iban}</strong>`, company: `<strong>${company.bedrijfsnaam || ''}</strong>` })
+        : t('vk.payWithoutIban', { days: `<strong>${payDays}</strong>` })}
+      ${company.email ? `<br>${t('vk.questions', { email: `<strong>${company.email}</strong>` })}` : ''}
     </div>
   </div>
 
@@ -239,43 +239,53 @@ function generatePdfHtml(inv) {
 </html>`;
 }
 
-function openPdf(inv) {
+function openPdf(inv, t) {
   const win = window.open('', '_blank');
-  if (!win) { alert('Sta pop-ups toe om de PDF te genereren.'); return; }
-  win.document.write(generatePdfHtml(inv));
+  if (!win) { alert(t('vk.popupBlocked')); return; }
+  win.document.write(generatePdfHtml(inv, t));
   win.document.close();
   win.focus();
   setTimeout(() => win.print(), 500);
 }
 
-function openMailTo(inv) {
+function openMailTo(inv, t) {
   const company = getCompanyInfo();
-  const subject = encodeURIComponent(`Factuur ${inv.invoiceNr}`);
+  const subject = encodeURIComponent(t('vk.mailSubject', { nr: inv.invoiceNr }));
   const body    = encodeURIComponent(
-    `Beste ${inv.customerName || 'klant'},\n\n` +
-    `Bijgevoegd ontvangt u factuur ${inv.invoiceNr}.\n\n` +
-    `Factuurbedrag:  € ${fmtNum(inv.amountIncl)} (incl. BTW)\n` +
-    `Factuurnummer:  ${inv.invoiceNr}\n` +
-    `Factuurdatum:   ${inv.date}\n` +
-    `Vervaldatum:    ${inv.dueDate || '–'}\n\n` +
-    `Graag ontvang ik de betaling binnen ${company.paymentDays || 14} dagen.\n\n` +
-    `Met vriendelijke groet,\n${company.bedrijfsnaam || ''}`,
+    `${t('vk.mailGreeting', { name: inv.customerName || t('vk.mailCustomerFallback') })}\n\n` +
+    `${t('vk.mailBodyIntro', { nr: inv.invoiceNr })}\n\n` +
+    `${t('vk.mailAmount', { amount: `€ ${fmtNum(inv.amountIncl)}` })}\n` +
+    `${t('vk.mailInvoiceNr', { nr: inv.invoiceNr })}\n` +
+    `${t('vk.mailInvoiceDate', { date: inv.date })}\n` +
+    `${t('vk.mailDueDate', { date: inv.dueDate || '–' })}\n\n` +
+    `${t('vk.mailPaymentRequest', { days: company.paymentDays || 14 })}\n\n` +
+    `${t('vk.mailSignoff')}\n${company.bedrijfsnaam || ''}`,
   );
   window.location.href = `mailto:${inv.customerEmail || ''}?subject=${subject}&body=${body}`;
 }
 
 // ─── status config ────────────────────────────────────────────────────────────
 
-const STATUS_CFG = {
-  draft: { label: 'Concept',   bg: '#F0EAD8', color: '#666',    next: 'sent'  },
-  sent:  { label: 'Verstuurd', bg: '#E5F5F9', color: '#0369a1', next: 'paid'  },
-  paid:  { label: 'Betaald',   bg: '#D2ECD0', color: '#2d7d32', next: 'draft' },
+const STATUS_NEXT = { draft: 'sent', sent: 'paid', paid: 'draft' };
+const STATUS_STYLE = {
+  draft: { bg: '#F0EAD8', color: '#666' },
+  sent:  { bg: '#E5F5F9', color: '#0369a1' },
+  paid:  { bg: '#D2ECD0', color: '#2d7d32' },
 };
 
+function getStatusCfg(t) {
+  return {
+    draft: { label: t('vk.status.draft'), ...STATUS_STYLE.draft, next: STATUS_NEXT.draft },
+    sent:  { label: t('vk.status.sent'),  ...STATUS_STYLE.sent,  next: STATUS_NEXT.sent },
+    paid:  { label: t('vk.status.paid'),  ...STATUS_STYLE.paid,  next: STATUS_NEXT.paid },
+  };
+}
+
 function StatusBadge({ inv, onCycle }) {
-  const cfg = STATUS_CFG[inv.status] || STATUS_CFG.draft;
+  const { t } = useApp();
+  const cfg = getStatusCfg(t)[inv.status] || getStatusCfg(t).draft;
   return (
-    <button onClick={(e) => { e.stopPropagation(); onCycle(inv); }} title="Klik om status te wijzigen"
+    <button onClick={(e) => { e.stopPropagation(); onCycle(inv); }} title={t('facturen.clickToChangeStatus')}
       style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
       <span style={{
         display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 9px',
@@ -306,6 +316,7 @@ function PreviewTotRow({ label, value, grand = false }) {
 }
 
 function LivePreview({ form, totals }) {
+  const { t } = useApp();
   const company = getCompanyInfo();
 
   return (
@@ -320,7 +331,7 @@ function LivePreview({ form, totals }) {
         background: '#020309', padding: '8px 16px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888' }}>Preview</span>
+        <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888' }}>{t('vk.preview')}</span>
         <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#666' }}>{form.invoiceNr}</span>
       </div>
 
@@ -329,10 +340,10 @@ function LivePreview({ form, totals }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontWeight: 800, fontSize: '14px', letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {company.bedrijfsnaam || <span style={{ color: '#bbb', fontStyle: 'italic', fontWeight: 400 }}>Bedrijfsnaam</span>}
+              {company.bedrijfsnaam || <span style={{ color: '#bbb', fontStyle: 'italic', fontWeight: 400 }}>{t('vk.companyNamePlaceholder')}</span>}
             </div>
             {company.btwnummer && (
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#aaa', marginTop: '2px' }}>BTW {company.btwnummer}</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#aaa', marginTop: '2px' }}>{t('vk.colVat')} {company.btwnummer}</div>
             )}
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -340,26 +351,26 @@ function LivePreview({ form, totals }) {
               display: 'inline-block', background: '#020309', color: '#FAF3E3',
               fontSize: '7px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase',
               padding: '2px 7px', borderRadius: '9999px', marginBottom: '6px',
-            }}>FACTUUR</span>
+            }}>{t('vk.invoiceTitle')}</span>
             <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: '13px' }}>
               {form.invoiceNr || <span style={{ color: '#bbb' }}>–</span>}
             </div>
             {form.date && <div style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>{form.date}</div>}
-            {form.dueDate && <div style={{ fontSize: '9px', color: '#aaa' }}>Vervalt {form.dueDate}</div>}
+            {form.dueDate && <div style={{ fontSize: '9px', color: '#aaa' }}>{t('vk.dueDate')} {form.dueDate}</div>}
           </div>
         </div>
       </div>
 
       {/* customer */}
       <div style={{ padding: '12px 20px', borderBottom: '1.5px solid #e8e0d0', minHeight: '52px' }}>
-        <div style={{ fontSize: '7px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#bbb', marginBottom: '4px' }}>Aan</div>
+        <div style={{ fontSize: '7px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#bbb', marginBottom: '4px' }}>{t('vk.to')}</div>
         {form.customerName
           ? <>
               <div style={{ fontWeight: 700, fontSize: '12px' }}>{form.customerName}</div>
               {form.customerAddress && <div style={{ fontSize: '10px', color: '#888', marginTop: '1px' }}>{form.customerAddress}</div>}
               {form.customerEmail   && <div style={{ fontSize: '10px', color: '#888' }}>{form.customerEmail}</div>}
             </>
-          : <div style={{ fontSize: '11px', color: '#ccc', fontStyle: 'italic' }}>Klantnaam invullen…</div>
+          : <div style={{ fontSize: '11px', color: '#ccc', fontStyle: 'italic' }}>{t('vk.fillCustomerName')}</div>
         }
       </div>
 
@@ -370,7 +381,7 @@ function LivePreview({ form, totals }) {
         background: '#F5EFE0', borderBottom: '1.5px solid #e8e0d0',
         fontSize: '7px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#888',
       }}>
-        <span>Omschrijving</span><span style={{ textAlign: 'right' }}>BTW</span><span style={{ textAlign: 'right' }}>Subtotaal</span>
+        <span>{t('vk.colDescription')}</span><span style={{ textAlign: 'right' }}>{t('vk.colVat')}</span><span style={{ textAlign: 'right' }}>{t('vk.colSubtotal')}</span>
       </div>
 
       {/* line items rows */}
@@ -387,7 +398,7 @@ function LivePreview({ form, totals }) {
               alignItems: 'center',
             }}>
               <span style={{ fontSize: '11px', fontWeight: isEmpty ? 400 : 600, color: isEmpty ? '#ccc' : '#020309', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: isEmpty ? 'italic' : 'normal' }}>
-                {isEmpty ? `Regel ${i + 1}` : (l.description || `Regel ${i + 1}`)}
+                {isEmpty ? t('vk.lineFallback', { n: i + 1 }) : (l.description || t('vk.lineFallback', { n: i + 1 }))}
               </span>
               <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#888', textAlign: 'right' }}>{l.rate}%</span>
               <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', fontWeight: 600, textAlign: 'right', color: sub > 0 ? '#020309' : '#ccc' }}>
@@ -400,21 +411,21 @@ function LivePreview({ form, totals }) {
 
       {/* totals */}
       <div style={{ background: '#FDEEC4', borderTop: '2px solid #020309', padding: '14px 20px' }}>
-        <PreviewTotRow label="Subtotaal excl. BTW" value={fmtEur(totals.totExcl)} />
+        <PreviewTotRow label={t('vk.subtotalExclVat')} value={fmtEur(totals.totExcl)} />
         {Object.entries(totals.byRate)
           .filter(([, v]) => v > 0)
           .sort(([a], [b]) => Number(b) - Number(a))
           .map(([rate, btw]) => (
-            <PreviewTotRow key={rate} label={`BTW ${rate}%`} value={fmtEur(btw)} />
+            <PreviewTotRow key={rate} label={t('shell.vatRate', { rate })} value={fmtEur(btw)} />
           ))}
         <div style={{ height: '1.5px', background: 'rgba(2,3,9,.25)', margin: '7px 0' }} />
-        <PreviewTotRow label="Totaal incl. BTW" value={fmtEur(totals.totIncl)} grand />
+        <PreviewTotRow label={t('vk.totalInclVat')} value={fmtEur(totals.totIncl)} grand />
       </div>
 
       {/* notes */}
       {form.notes && (
         <div style={{ padding: '12px 20px', borderTop: '1.5px solid #e8e0d0' }}>
-          <div style={{ fontSize: '7px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#bbb', marginBottom: '4px' }}>Notities</div>
+          <div style={{ fontSize: '7px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#bbb', marginBottom: '4px' }}>{t('vk.notes')}</div>
           <div style={{ fontSize: '10px', color: '#666', lineHeight: 1.55 }}>{form.notes}</div>
         </div>
       )}
@@ -423,8 +434,8 @@ function LivePreview({ form, totals }) {
       <div style={{ background: '#020309', padding: '10px 20px' }}>
         <div style={{ fontSize: '9px', color: '#555', lineHeight: 1.7 }}>
           {company.iban
-            ? <><span style={{ color: '#888' }}>Betalen op SPAN </span><span style={{ fontFamily: "'DM Mono', monospace", color: '#888' }}>{company.iban}</span></>
-            : <span style={{ color: '#555' }}>IBAN instellen via Instellingen → Profiel</span>}
+            ? <><span style={{ color: '#888' }}>{t('vk.payOn')}</span><span style={{ fontFamily: "'DM Mono', monospace", color: '#888' }}>{company.iban}</span></>
+            : <span style={{ color: '#555' }}>{t('vk.setIbanHint')}</span>}
         </div>
       </div>
     </div>
@@ -434,11 +445,11 @@ function LivePreview({ form, totals }) {
 // ─── list ─────────────────────────────────────────────────────────────────────
 
 function VerkoopList({ onNew, onEdit }) {
-  const { salesInvoices, saveSalesInvoice, removeSalesInvoice } = useApp();
+  const { salesInvoices, saveSalesInvoice, removeSalesInvoice, t } = useApp();
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   function cycleStatus(inv) {
-    saveSalesInvoice({ ...inv, status: STATUS_CFG[inv.status]?.next || 'draft' });
+    saveSalesInvoice({ ...inv, status: STATUS_NEXT[inv.status] || 'draft' });
   }
 
   const sorted = [...salesInvoices].sort((a, b) => (b.invoiceNr || '').localeCompare(a.invoiceNr || ''));
@@ -458,8 +469,8 @@ function VerkoopList({ onNew, onEdit }) {
             <FileText size={24} />
           </span>
           <div>
-            <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '6px' }}>Nog geen verkoopfacturen</div>
-            <div style={{ fontSize: '13px', color: '#888', maxWidth: '360px' }}>Maak je eerste verkoopfactuur aan en stuur hem direct naar je klant.</div>
+            <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '6px' }}>{t('vk.emptyTitle')}</div>
+            <div style={{ fontSize: '13px', color: '#888', maxWidth: '360px' }}>{t('vk.emptyDesc')}</div>
           </div>
           <NieuweBtn onClick={onNew} />
         </div>
@@ -477,7 +488,7 @@ function VerkoopList({ onNew, onEdit }) {
 
       <div style={{ background: '#FFFFFF', border: '2px solid #020309', borderRadius: '12px', boxShadow: '3px 3px 0 #020309', overflow: 'hidden' }}>
         <div style={{ display: 'grid', gridTemplateColumns: colW.join(' '), padding: '10px 16px', background: '#F5EFE0', borderBottom: '2px solid #020309', fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '0.5px', textTransform: 'uppercase', color: '#666', gap: '8px' }}>
-          <span /><span>Klant</span><span>Factuurnr</span><span>Datum</span><span>Vervaldatum</span><span style={{ textAlign: 'right' }}>Bedrag</span><span>Status</span><span />
+          <span /><span>{t('vk.colCustomer')}</span><span>{t('vk.colInvoiceNr')}</span><span>{t('facturen.colDate')}</span><span>{t('vk.colDueDate')}</span><span style={{ textAlign: 'right' }}>{t('vk.colAmount')}</span><span>{t('vk.colStatus')}</span><span />
         </div>
 
         {sorted.map((inv, idx) => (
@@ -492,10 +503,10 @@ function VerkoopList({ onNew, onEdit }) {
             <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: '13px', textAlign: 'right' }}>{fmtEur(inv.amountIncl)}</span>
             <StatusBadge inv={inv} onCycle={cycleStatus} />
             <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
-              <IconBtn title="Bewerken"  onClick={() => onEdit(inv)}><Edit2 size={13} /></IconBtn>
-              <IconBtn title="PDF"       onClick={() => openPdf(inv)}><Download size={13} /></IconBtn>
-              {inv.customerEmail && <IconBtn title="E-mail" onClick={() => openMailTo(inv)}><Mail size={13} /></IconBtn>}
-              <IconBtn title="Verwijderen" danger onClick={() => setConfirmDelete(inv)}><Trash2 size={13} /></IconBtn>
+              <IconBtn title={t('vk.edit')}  onClick={() => onEdit(inv)}><Edit2 size={13} /></IconBtn>
+              <IconBtn title="PDF"       onClick={() => openPdf(inv, t)}><Download size={13} /></IconBtn>
+              {inv.customerEmail && <IconBtn title={t('vk.email')} onClick={() => openMailTo(inv, t)}><Mail size={13} /></IconBtn>}
+              <IconBtn title={t('common.delete')} danger onClick={() => setConfirmDelete(inv)}><Trash2 size={13} /></IconBtn>
             </div>
           </div>
         ))}
@@ -506,14 +517,14 @@ function VerkoopList({ onNew, onEdit }) {
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(2,3,9,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setConfirmDelete(null)}>
           <div style={{ background: '#FAF3E3', border: '2px solid #020309', borderRadius: '14px', boxShadow: '5px 5px 0 #020309', padding: '28px', maxWidth: '360px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '16px', marginBottom: '8px' }}>Factuur verwijderen?</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '16px', marginBottom: '8px' }}>{t('vk.deleteInvoiceConfirmTitle')}</div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#555', marginBottom: '22px', lineHeight: 1.55 }}>
-              <strong>{confirmDelete.invoiceNr}</strong> · {confirmDelete.customerName}<br />Dit kan niet ongedaan worden gemaakt.
+              <strong>{confirmDelete.invoiceNr}</strong> · {confirmDelete.customerName}<br />{t('vk.deleteInvoiceConfirmBody')}
             </div>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ background: '#FFFFFF', border: '2px solid #020309', borderRadius: '9px', boxShadow: '2px 2px 0 #020309', padding: '8px 16px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: '13px' }}>Annuleren</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ background: '#FFFFFF', border: '2px solid #020309', borderRadius: '9px', boxShadow: '2px 2px 0 #020309', padding: '8px 16px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: '13px' }}>{t('common.cancel')}</button>
               <button onClick={async () => { await removeSalesInvoice(confirmDelete.id); setConfirmDelete(null); }} style={{ background: '#c0392b', border: '2px solid #020309', borderRadius: '9px', boxShadow: '2px 2px 0 #020309', padding: '8px 16px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '13px', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Trash2 size={14} /> Verwijderen
+                <Trash2 size={14} /> {t('common.delete')}
               </button>
             </div>
           </div>
@@ -524,6 +535,7 @@ function VerkoopList({ onNew, onEdit }) {
 }
 
 function TotalsBar({ invoices }) {
+  const { t } = useApp();
   const open    = invoices.filter((i) => i.status !== 'paid');
   const paid    = invoices.filter((i) => i.status === 'paid');
   const totAll  = invoices.reduce((s, i) => s + (i.amountIncl || 0), 0);
@@ -531,11 +543,11 @@ function TotalsBar({ invoices }) {
   const totPaid = paid.reduce((s, i) => s + (i.amountIncl || 0), 0);
   return (
     <div style={{ background: '#FAF3E3', border: '2px solid #020309', borderRadius: '12px', boxShadow: '3px 3px 0 #020309', padding: '14px 20px', display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
-      <TotItem label="Gefactureerd" value={fmtEur(totAll)} count={invoices.length} />
+      <TotItem label={t('vk.invoiced')} value={fmtEur(totAll)} count={invoices.length} />
       <div style={{ width: '1.5px', height: '28px', background: '#d4cbbe' }} />
-      <TotItem label="Openstaand" value={fmtEur(totOpen)} count={open.length} color="#92600A" />
+      <TotItem label={t('vk.open')} value={fmtEur(totOpen)} count={open.length} color="#92600A" />
       <div style={{ width: '1.5px', height: '28px', background: '#d4cbbe' }} />
-      <TotItem label="Betaald" value={fmtEur(totPaid)} count={paid.length} color="#2d7d32" />
+      <TotItem label={t('vk.status.paid')} value={fmtEur(totPaid)} count={paid.length} color="#2d7d32" />
     </div>
   );
 }
@@ -552,6 +564,7 @@ function TotItem({ label, value, count, color = '#020309' }) {
 // ─── customer picker ──────────────────────────────────────────────────────────
 
 function CustomerPicker({ salesInvoices, onSelect }) {
+  const { t } = useApp();
   const [open,   setOpen]   = useState(false);
   const [search, setSearch] = useState('');
 
@@ -580,7 +593,7 @@ function CustomerPicker({ salesInvoices, onSelect }) {
         style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 12px', background: open ? '#020309' : '#F5EFE0', color: open ? '#FAF3E3' : '#020309', border: '2px solid #020309', borderRadius: '9px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: '12px' }}
       >
         <ChevronLeft size={13} style={{ transform: open ? 'rotate(90deg)' : 'rotate(-90deg)', transition: 'transform .15s' }} />
-        Bestaande klant kiezen
+        {t('vk.existingCustomer')}
         <span style={{ background: open ? '#FDEEC4' : '#020309', color: open ? '#020309' : '#FAF3E3', borderRadius: '9999px', padding: '1px 7px', fontSize: '10px', fontWeight: 700 }}>{customers.length}</span>
       </button>
 
@@ -589,7 +602,7 @@ function CustomerPicker({ salesInvoices, onSelect }) {
           <div style={{ padding: '10px' }}>
             <input
               autoFocus
-              placeholder="Zoek op naam of e-mail…"
+              placeholder={t('vk.searchCustomer')}
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', border: '2px solid #020309', borderRadius: '8px', fontFamily: "'DM Sans', sans-serif", fontSize: '12px', background: '#FFFFFF', outline: 'none' }}
@@ -597,7 +610,7 @@ function CustomerPicker({ salesInvoices, onSelect }) {
           </div>
           <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
             {filtered.length === 0 && (
-              <div style={{ padding: '12px 14px', fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#888' }}>Geen resultaten</div>
+              <div style={{ padding: '12px 14px', fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#888' }}>{t('vk.noResults')}</div>
             )}
             {filtered.map(c => (
               <button
@@ -623,7 +636,7 @@ function CustomerPicker({ salesInvoices, onSelect }) {
 // ─── form ─────────────────────────────────────────────────────────────────────
 
 function VerkoopForm({ invoice, onBack }) {
-  const { salesInvoices, saveSalesInvoice } = useApp();
+  const { salesInvoices, saveSalesInvoice, t } = useApp();
   const [form,   setForm]   = useState(() => initForm(salesInvoices, invoice));
   const [saving, setSaving] = useState(false);
 
@@ -644,7 +657,7 @@ function VerkoopForm({ invoice, onBack }) {
   async function handleSend() {
     const inv = buildFinalInvoice(form, totals, 'sent');
     await saveSalesInvoice(inv);
-    openMailTo(inv);
+    openMailTo(inv, t);
     onBack();
   }
 
@@ -663,48 +676,48 @@ function VerkoopForm({ invoice, onBack }) {
         {/* back */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontSize: '13px', fontWeight: 600, color: '#888' }}>
-            <ChevronLeft size={16} /> Terug
+            <ChevronLeft size={16} /> {t('vk.back')}
           </button>
           <span style={{ color: '#ccc' }}>·</span>
           <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '14px' }}>
-            {invoice ? `Factuur bewerken · ${invoice.invoiceNr}` : 'Nieuwe verkoopfactuur'}
+            {invoice ? t('vk.editInvoiceTitle', { nr: invoice.invoiceNr }) : t('vk.newInvoiceTitle')}
           </span>
         </div>
 
         {/* meta */}
         <div style={{ background: '#FFFFFF', border: '2px solid #020309', borderRadius: '12px', boxShadow: '3px 3px 0 #020309', padding: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-          <Input label="Factuurnummer" mono value={form.invoiceNr} onChange={(e) => set('invoiceNr', e.target.value)} />
-          <Input label="Factuurdatum"  mono placeholder="DD-MM-JJJJ" value={form.date}    onChange={(e) => set('date', e.target.value)} />
-          <Input label="Vervaldatum"   mono placeholder="DD-MM-JJJJ" value={form.dueDate} onChange={(e) => set('dueDate', e.target.value)} />
+          <Input label={t('vk.invoiceNumber')} mono value={form.invoiceNr} onChange={(e) => set('invoiceNr', e.target.value)} />
+          <Input label={t('vk.invoiceDate')}  mono placeholder="DD-MM-JJJJ" value={form.date}    onChange={(e) => set('date', e.target.value)} />
+          <Input label={t('vk.colDueDate')}   mono placeholder="DD-MM-JJJJ" value={form.dueDate} onChange={(e) => set('dueDate', e.target.value)} />
         </div>
 
         {/* customer */}
         <div style={{ background: '#FFFFFF', border: '2px solid #020309', borderRadius: '12px', boxShadow: '3px 3px 0 #020309', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-            <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', color: '#888' }}>Klantgegevens</span>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', color: '#888' }}>{t('vk.customerData')}</span>
             <CustomerPicker
               salesInvoices={salesInvoices}
               onSelect={c => { set('customerName', c.name); set('customerEmail', c.email); set('customerAddress', c.address); }}
             />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-            <Input label="Naam / bedrijf" value={form.customerName} onChange={(e) => set('customerName', e.target.value)} />
-            <Input label="E-mailadres" type="email" value={form.customerEmail} onChange={(e) => set('customerEmail', e.target.value)} />
+            <Input label={t('vk.nameCompany')} value={form.customerName} onChange={(e) => set('customerName', e.target.value)} />
+            <Input label={t('vk.emailAddress')} type="email" value={form.customerEmail} onChange={(e) => set('customerEmail', e.target.value)} />
           </div>
-          <Input label="Adres (optioneel)" value={form.customerAddress} placeholder="Straat 1, 1234 AB Stad" onChange={(e) => set('customerAddress', e.target.value)} />
+          <Input label={t('vk.addressOptional')} value={form.customerAddress} placeholder="Straat 1, 1234 AB Stad" onChange={(e) => set('customerAddress', e.target.value)} />
         </div>
 
         {/* line items */}
         <div style={{ background: '#FFFFFF', border: '2px solid #020309', borderRadius: '12px', boxShadow: '3px 3px 0 #020309', overflow: 'hidden' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 106px 76px 96px 32px', padding: '10px 16px', gap: '8px', background: '#F5EFE0', borderBottom: '2px solid #020309', fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '0.5px', textTransform: 'uppercase', color: '#666' }}>
-            <span>Omschrijving</span><span>Aantal</span><span>Prijs</span><span>BTW</span><span style={{ textAlign: 'right' }}>Subtotaal</span><span />
+            <span>{t('vk.colDescription')}</span><span>{t('vk.colQty')}</span><span>{t('vk.colPrice')}</span><span>{t('vk.colVat')}</span><span style={{ textAlign: 'right' }}>{t('vk.colSubtotal')}</span><span />
           </div>
 
           {form.lineItems.map((l) => {
             const sub = (parseFloat(l.qty) || 0) * (parseFloat(l.unitPrice) || 0);
             return (
               <div key={l.id} style={{ display: 'grid', gridTemplateColumns: '1fr 70px 106px 76px 96px 32px', padding: '10px 16px', gap: '8px', alignItems: 'center', borderBottom: '1px solid #e8e0d0' }}>
-                <input value={l.description} placeholder="Omschrijving" onChange={(e) => updateLine(l.id, 'description', e.target.value)} style={{ ...inp }} />
+                <input value={l.description} placeholder={t('vk.colDescription')} onChange={(e) => updateLine(l.id, 'description', e.target.value)} style={{ ...inp }} />
                 <input type="number" min="0" step="1"    value={l.qty}       onChange={(e) => updateLine(l.id, 'qty',       e.target.value)} style={{ ...inp, textAlign: 'right' }} />
                 <input type="number" min="0" step="0.01" value={l.unitPrice} placeholder="0,00" onChange={(e) => updateLine(l.id, 'unitPrice', e.target.value)} style={{ ...inp, textAlign: 'right' }} />
                 <select value={l.rate} onChange={(e) => updateLine(l.id, 'rate', Number(e.target.value))} style={{ ...inp, cursor: 'pointer' }}>
@@ -731,29 +744,29 @@ function VerkoopForm({ invoice, onBack }) {
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#020309'; e.currentTarget.style.color = '#020309'; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#aaa'; e.currentTarget.style.color = '#888'; }}
             >
-              <Plus size={14} /> Regel toevoegen
+              <Plus size={14} /> {t('vk.addLine')}
             </button>
           </div>
         </div>
 
         {/* notes */}
         <div style={{ background: '#FFFFFF', border: '2px solid #020309', borderRadius: '12px', boxShadow: '3px 3px 0 #020309', padding: '20px' }}>
-          <Textarea label="Notities (optioneel)" rows={3} value={form.notes} placeholder="Betalingsinformatie, opmerkingen…" onChange={(e) => set('notes', e.target.value)} />
+          <Textarea label={t('vk.notesOptional')} rows={3} value={form.notes} placeholder={t('vk.notesPlaceholder')} onChange={(e) => set('notes', e.target.value)} />
         </div>
 
         {/* actions */}
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-end', padding: '16px 20px', background: '#FAF3E3', border: '2px solid #020309', borderRadius: '12px', boxShadow: '3px 3px 0 #020309' }}>
           <button onClick={onBack} style={{ padding: '9px 18px', background: '#FFFFFF', border: '2px solid #020309', borderRadius: '10px', boxShadow: '2px 2px 0 #020309', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: '13px' }}>
-            Annuleren
+            {t('vk.cancel')}
           </button>
-          <button onClick={() => openPdf(buildFinalInvoice(form, totals))} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', background: '#FFFFFF', border: '2px solid #020309', borderRadius: '10px', boxShadow: '2px 2px 0 #020309', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: '13px' }}>
-            <Download size={15} /> PDF bekijken
+          <button onClick={() => openPdf(buildFinalInvoice(form, totals), t)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', background: '#FFFFFF', border: '2px solid #020309', borderRadius: '10px', boxShadow: '2px 2px 0 #020309', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: '13px' }}>
+            <Download size={15} /> {t('vk.viewPdf')}
           </button>
           <button onClick={() => save('draft')} disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', background: '#FDEEC4', border: '2px solid #020309', borderRadius: '10px', boxShadow: '2px 2px 0 #020309', cursor: saving ? 'not-allowed' : 'pointer', fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '13px' }}>
-            {saving ? 'Opslaan…' : 'Opslaan als concept'}
+            {saving ? t('vk.saving') : t('vk.saveAsDraft')}
           </button>
-          <button onClick={handleSend} disabled={saving || !form.customerEmail} title={!form.customerEmail ? 'Voeg een e-mailadres toe' : undefined} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', background: !form.customerEmail ? '#E8E0D0' : '#020309', color: !form.customerEmail ? '#aaa' : '#FAF3E3', border: '2px solid #020309', borderRadius: '10px', boxShadow: !form.customerEmail ? 'none' : '2px 2px 0 #020309', cursor: (!saving && form.customerEmail) ? 'pointer' : 'not-allowed', fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '13px' }}>
-            <Send size={15} /> Opslaan & versturen
+          <button onClick={handleSend} disabled={saving || !form.customerEmail} title={!form.customerEmail ? t('vk.addEmailFirst') : undefined} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', background: !form.customerEmail ? '#E8E0D0' : '#020309', color: !form.customerEmail ? '#aaa' : '#FAF3E3', border: '2px solid #020309', borderRadius: '10px', boxShadow: !form.customerEmail ? 'none' : '2px 2px 0 #020309', cursor: (!saving && form.customerEmail) ? 'pointer' : 'not-allowed', fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '13px' }}>
+            <Send size={15} /> {t('vk.saveAndSend')}
           </button>
         </div>
       </div>
@@ -767,9 +780,10 @@ function VerkoopForm({ invoice, onBack }) {
 // ─── shared ───────────────────────────────────────────────────────────────────
 
 function NieuweBtn({ onClick }) {
+  const { t } = useApp();
   return (
     <button onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: '#020309', color: '#FAF3E3', border: '2px solid #020309', borderRadius: '10px', boxShadow: '3px 3px 0 #FDEEC4', fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>
-      <Plus size={15} /> Nieuwe verkoopfactuur
+      <Plus size={15} /> {t('vk.newInvoiceTitle')}
     </button>
   );
 }
